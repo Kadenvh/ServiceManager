@@ -1,84 +1,66 @@
 # ╔═══════════════════════════════════════════════════════════════════════════════╗
-# ║              🚀 SERVER MANAGER V2 - REVOLUTIONARY EDITION 🚀                ║
-# ║                    Professional Application & Service Launcher               ║
+# ║                    🚀 SERVER MANAGER V2 - FINAL EDITION 🚀                  ║
 # ║                          ⚡ Built for Power Users ⚡                         ║
 # ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
-Add-Type -AssemblyName System.Drawing.Design
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# 🎨 VISUAL THEMES & ENHANCED STYLING
-# ═══════════════════════════════════════════════════════════════════════════════
 
 [System.Windows.Forms.Application]::EnableVisualStyles()
 [System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 
 # Modern Color Palette
 $global:Theme = @{
-    Primary = [System.Drawing.Color]::FromArgb(64, 128, 255)      # Modern Blue
-    Secondary = [System.Drawing.Color]::FromArgb(100, 200, 100)   # Success Green  
-    Accent = [System.Drawing.Color]::FromArgb(255, 165, 0)        # Warning Orange
-    Danger = [System.Drawing.Color]::FromArgb(255, 85, 85)        # Error Red
-    Dark = [System.Drawing.Color]::FromArgb(45, 45, 48)           # Dark Gray
-    Light = [System.Drawing.Color]::FromArgb(248, 249, 250)       # Light Gray
-    Surface = [System.Drawing.Color]::FromArgb(255, 255, 255)     # White
-    Text = [System.Drawing.Color]::FromArgb(33, 37, 41)           # Dark Text
-    TextMuted = [System.Drawing.Color]::FromArgb(108, 117, 125)   # Muted Text
+    Primary = [System.Drawing.Color]::FromArgb(64, 128, 255)
+    Secondary = [System.Drawing.Color]::FromArgb(100, 200, 100)
+    Accent = [System.Drawing.Color]::FromArgb(255, 165, 0)
+    Danger = [System.Drawing.Color]::FromArgb(255, 85, 85)
+    Dark = [System.Drawing.Color]::FromArgb(45, 45, 48)
+    Light = [System.Drawing.Color]::FromArgb(248, 249, 250)
+    Surface = [System.Drawing.Color]::FromArgb(255, 255, 255)
+    Text = [System.Drawing.Color]::FromArgb(33, 37, 41)
+    TextMuted = [System.Drawing.Color]::FromArgb(108, 117, 125)
 }
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# ⚙️ GLOBAL CONFIGURATION & STATE MANAGEMENT
-# ═══════════════════════════════════════════════════════════════════════════════
-
+# Global Configuration
 $global:ConfigFile = ".\scripts_storage.json"
 $global:SettingsFile = ".\app_settings.json"
 $global:LogEntries = [System.Collections.ArrayList]::new()
 $global:ActiveTabs = @{}
-$global:CurrentMode = "Script"  # Script or Application mode
 
-# Enhanced Extension Support System
+# Enhanced Extension Support
 $global:SupportedTypes = @{
     "Script" = @{
         ".ps1" = @{
             name = "PowerShell Script"
             icon = "🔵"
-            description = "Windows PowerShell automation script"
-            executeMethod = "PowerShell"
             validator = "Test-PowerShellScript"
         }
-        # Future: ".py", ".js", ".bat", etc.
     }
     "Application" = @{
         ".exe" = @{
             name = "Windows Application"
             icon = "⚙️"
-            description = "Windows executable application"
-            executeMethod = "Direct"
             validator = "Test-ExecutableApp"
         }
         ".msi" = @{
             name = "Installer Package"
             icon = "📦"
-            description = "Windows installer package"
-            executeMethod = "Direct"
             validator = "Test-ExecutableApp"
         }
     }
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 🔧 ENHANCED CONFIGURATION MANAGEMENT
+# 🔧 CONFIGURATION MANAGEMENT
 # ═══════════════════════════════════════════════════════════════════════════════
 
 function Load-AppSettings {
     if (Test-Path $global:SettingsFile) {
         try {
-            $settings = Get-Content $global:SettingsFile -Raw | ConvertFrom-Json
-            return $settings
+            return Get-Content $global:SettingsFile -Raw | ConvertFrom-Json
         } catch {
-            Add-LogEntry "[WARN] Settings corrupted, creating defaults" "Warning"
+            Add-LogEntry "Settings corrupted, creating defaults" "Warning"
             return Create-DefaultSettings
         }
     } else {
@@ -92,12 +74,8 @@ function Create-DefaultSettings {
         serviceManagerPath = ".\ServerManager-V2.ps1"
         defaultScriptLocation = ".\scripts\"
         autoOrganizeScripts = $true
-        showAdvancedOptions = $false
         theme = "Modern"
-        startInFullscreen = $false
         enableNotifications = $true
-        logLevel = "Info"
-        autoCheckUpdates = $true
     }
     Save-AppSettings $defaultSettings
     return $defaultSettings
@@ -109,7 +87,7 @@ function Save-AppSettings {
         $settings | ConvertTo-Json -Depth 10 | Set-Content $global:SettingsFile
         return $true
     } catch {
-        Add-LogEntry "[ERROR] Failed to save settings: $($_.Exception.Message)" "Error"
+        Add-LogEntry "Failed to save settings: $($_.Exception.Message)" "Error"
         return $false
     }
 }
@@ -118,9 +96,7 @@ function Load-ScriptConfig {
     if (Test-Path $global:ConfigFile) {
         try {
             $configData = Get-Content $global:ConfigFile -Raw | ConvertFrom-Json
-            # Handle both V1 and V2 formats
             if ($configData -is [array]) {
-                # V1 format conversion
                 $config = $configData[1]
                 if (-not $config.version) { $config.version = "1.0" }
             } else {
@@ -128,7 +104,7 @@ function Load-ScriptConfig {
             }
             return $config
         } catch {
-            Add-LogEntry "[WARN] Config corrupted, creating new one" "Warning"
+            Add-LogEntry "Config corrupted, creating new one" "Warning"
             return Create-DefaultConfig
         }
     } else {
@@ -190,10 +166,9 @@ function Create-DefaultConfig {
                 category = "Automation"
             }
         )
-        categories = @("AI Services", "Automation", "Development", "System", "Custom")
+        categories = @("AI Services", "Automation", "Development", "System", "Applications")
         statistics = @{
             totalExecutions = 0
-            lastUsed = $null
             favoriteScripts = @()
         }
     }
@@ -208,7 +183,7 @@ function Save-ScriptConfig {
         $config | ConvertTo-Json -Depth 10 | Set-Content $global:ConfigFile
         return $true
     } catch {
-        Add-LogEntry "[ERROR] Failed to save configuration: $($_.Exception.Message)" "Error"
+        Add-LogEntry "Failed to save configuration: $($_.Exception.Message)" "Error"
         return $false
     }
 }
@@ -218,10 +193,7 @@ function Save-ScriptConfig {
 # ═══════════════════════════════════════════════════════════════════════════════
 
 function Add-LogEntry {
-    param(
-        [string]$message,
-        [string]$level = "Info"
-    )
+    param([string]$message, [string]$level = "Info")
     
     $timestamp = Get-Date -Format "HH:mm:ss"
     $levelIcon = switch ($level) {
@@ -235,7 +207,6 @@ function Add-LogEntry {
     $logMessage = "[$timestamp] $levelIcon $message"
     [void]$global:LogEntries.Add(@{ Message = $logMessage; Level = $level; Timestamp = Get-Date })
     
-    # Update log display with color coding
     if ($global:LogTextBox) {
         $color = switch ($level) {
             "Success" { [System.Drawing.Color]::LightGreen }
@@ -250,7 +221,6 @@ function Add-LogEntry {
         $global:LogTextBox.ScrollToCaret()
     }
     
-    # Console output with color
     $consoleColor = switch ($level) {
         "Success" { "Green" }
         "Warning" { "Yellow" }
@@ -261,38 +231,28 @@ function Add-LogEntry {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 🔍 ADVANCED VALIDATION SYSTEM
+# 🔍 VALIDATION SYSTEM
 # ═══════════════════════════════════════════════════════════════════════════════
 
 function Test-PowerShellScript {
     param($FilePath)
     
-    $result = @{
-        IsValid = $false
-        Errors = @()
-        Warnings = @()
-        Suggestions = @()
-        Score = 0
-    }
+    $result = @{ IsValid = $false; Errors = @(); Warnings = @(); Suggestions = @(); Score = 0 }
     
     try {
-        # File existence
         if (-not (Test-Path $FilePath)) {
             $result.Errors += "File not found: $FilePath"
             return $result
         }
         
-        # File size check
         $fileInfo = Get-Item $FilePath
         if ($fileInfo.Length -eq 0) {
             $result.Errors += "File is empty"
             return $result
         }
         
-        # Read content for analysis
         $content = Get-Content $FilePath -Raw
         
-        # Basic PowerShell syntax check
         try {
             $null = [System.Management.Automation.Language.Parser]::ParseInput($content, [ref]$null, [ref]$null)
             $result.Score += 30
@@ -300,36 +260,25 @@ function Test-PowerShellScript {
             $result.Errors += "PowerShell syntax error: $($_.Exception.Message)"
         }
         
-        # Check for required path setup
         if ($content -match '\$scriptPath.*Split-Path.*MyInvocation\.MyCommand\.Path') {
             $result.Score += 20
             $result.Suggestions += "✅ Proper path setup detected"
-        } else {
-            $result.Warnings += "Missing recommended path setup: `$scriptPath = Split-Path -Parent `$MyInvocation.MyCommand.Path"
         }
         
-        # Check for Set-Location
         if ($content -match 'Set-Location.*\$scriptPath') {
             $result.Score += 15
-        } else {
-            $result.Warnings += "Consider adding: Set-Location `$scriptPath"
         }
         
-        # Check for logging/output
-        if ($content -match 'Write-Host|Write-Output|Write-Information') {
+        if ($content -match 'Write-Host|Write-Output') {
             $result.Score += 10
             $result.Suggestions += "✅ Output/logging detected"
         }
         
-        # Check for error handling
         if ($content -match 'try\s*{.*}.*catch|trap') {
             $result.Score += 15
             $result.Suggestions += "✅ Error handling detected"
-        } else {
-            $result.Suggestions += "Consider adding try/catch blocks for better error handling"
         }
         
-        # Final validation
         $result.IsValid = ($result.Errors.Count -eq 0) -and ($result.Score -ge 30)
         
     } catch {
@@ -342,16 +291,9 @@ function Test-PowerShellScript {
 function Test-ExecutableApp {
     param($FilePath)
     
-    $result = @{
-        IsValid = $false
-        Errors = @()
-        Warnings = @()
-        Suggestions = @()
-        Score = 0
-    }
+    $result = @{ IsValid = $false; Errors = @(); Warnings = @(); Suggestions = @(); Score = 0 }
     
     try {
-        # File existence
         if (-not (Test-Path $FilePath)) {
             $result.Errors += "Application not found: $FilePath"
             return $result
@@ -359,19 +301,16 @@ function Test-ExecutableApp {
         
         $fileInfo = Get-Item $FilePath
         
-        # Check if it's actually an executable
         if ($fileInfo.Extension -notin @('.exe', '.msi', '.bat', '.cmd')) {
             $result.Errors += "Not a valid executable file"
             return $result
         }
         
-        # Check file size (shouldn't be 0)
         if ($fileInfo.Length -eq 0) {
             $result.Errors += "Executable file is empty or corrupted"
             return $result
         }
         
-        # Try to get file version info
         try {
             $versionInfo = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($FilePath)
             if ($versionInfo.FileDescription) {
@@ -386,7 +325,6 @@ function Test-ExecutableApp {
             $result.Warnings += "Could not read version information"
         }
         
-        # Check if file is digitally signed
         try {
             $signature = Get-AuthenticodeSignature $FilePath -ErrorAction SilentlyContinue
             if ($signature.Status -eq 'Valid') {
@@ -395,16 +333,9 @@ function Test-ExecutableApp {
             } elseif ($signature.Status -eq 'NotSigned') {
                 $result.Warnings += "Application is not digitally signed"
             }
-        } catch {
-            # Ignore signature check errors
-        }
+        } catch { }
         
-        # Check file attributes
-        if ($fileInfo.Attributes -band [System.IO.FileAttributes]::ReadOnly) {
-            $result.Warnings += "File is read-only"
-        }
-        
-        $result.Score += 45  # Base score for valid executable
+        $result.Score += 45
         $result.IsValid = ($result.Errors.Count -eq 0)
         
     } catch {
@@ -415,13 +346,12 @@ function Test-ExecutableApp {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 🚀 REVOLUTIONARY ADD SCRIPT DIALOG WITH TABS
+# 🚀 ENHANCED ADD DIALOG
 # ═══════════════════════════════════════════════════════════════════════════════
 
 function Show-EnhancedAddDialog {
     param($config)
     
-    # Create modern dialog with tabs
     $addForm = New-Object System.Windows.Forms.Form
     $addForm.Text = "Add New Item - ServerManager V2"
     $addForm.Size = New-Object System.Drawing.Size(600, 550)
@@ -430,9 +360,8 @@ function Show-EnhancedAddDialog {
     $addForm.MaximizeBox = $false
     $addForm.MinimizeBox = $false
     $addForm.BackColor = $global:Theme.Light
-    $addForm.Font = New-Object System.Drawing.Font("Segoe UI", 9)
     
-    # Modern header
+    # Header
     $headerPanel = New-Object System.Windows.Forms.Panel
     $headerPanel.Location = New-Object System.Drawing.Point(0, 0)
     $headerPanel.Size = New-Object System.Drawing.Size(600, 60)
@@ -447,94 +376,84 @@ function Show-EnhancedAddDialog {
     $headerLabel.ForeColor = [System.Drawing.Color]::White
     $headerPanel.Controls.Add($headerLabel)
     
-    # Tab Control for Script vs Application
+    # Tab Control
     $tabControl = New-Object System.Windows.Forms.TabControl
     $tabControl.Location = New-Object System.Drawing.Point(20, 80)
     $tabControl.Size = New-Object System.Drawing.Size(560, 380)
-    $tabControl.Font = New-Object System.Drawing.Font("Segoe UI", 10)
     $addForm.Controls.Add($tabControl)
     
-    # ═══════════════════════════════════════════════════════════════════════════
-    # 📜 SCRIPT TAB
-    # ═══════════════════════════════════════════════════════════════════════════
-    
+    # Script Tab
     $scriptTab = New-Object System.Windows.Forms.TabPage
     $scriptTab.Text = "📜 PowerShell Script"
     $scriptTab.BackColor = $global:Theme.Surface
-    $scriptTab.Padding = New-Object System.Windows.Forms.Padding(15)
     $tabControl.TabPages.Add($scriptTab)
     
-    # Filename and Extension (Revolutionary Layout!)
+    # Script fields
     $fileLabel = New-Object System.Windows.Forms.Label
     $fileLabel.Location = New-Object System.Drawing.Point(20, 30)
-    $fileLabel.Size = New-Object System.Drawing.Size(120, 25)
+    $fileLabel.Size = New-Object System.Drawing.Size(100, 25)
     $fileLabel.Text = "📝 Script Name:"
     $fileLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $scriptTab.Controls.Add($fileLabel)
     
     $fileNameTextBox = New-Object System.Windows.Forms.TextBox
-    $fileNameTextBox.Location = New-Object System.Drawing.Point(140, 28)
+    $fileNameTextBox.Location = New-Object System.Drawing.Point(130, 28)
     $fileNameTextBox.Size = New-Object System.Drawing.Size(280, 25)
     $fileNameTextBox.Text = "MyScript"
-    $fileNameTextBox.Font = New-Object System.Drawing.Font("Consolas", 10)
     $scriptTab.Controls.Add($fileNameTextBox)
     
     $extensionCombo = New-Object System.Windows.Forms.ComboBox
-    $extensionCombo.Location = New-Object System.Drawing.Point(430, 28)
+    $extensionCombo.Location = New-Object System.Drawing.Point(420, 28)
     $extensionCombo.Size = New-Object System.Drawing.Size(80, 25)
     $extensionCombo.DropDownStyle = "DropDownList"
-    $extensionCombo.Items.AddRange(@(".ps1"))  # Expandable for future
+    $extensionCombo.Items.AddRange(@(".ps1"))
     $extensionCombo.SelectedIndex = 0
     $scriptTab.Controls.Add($extensionCombo)
     
-    # Type Selection (Start/Stop)
     $typeLabel = New-Object System.Windows.Forms.Label
     $typeLabel.Location = New-Object System.Drawing.Point(20, 70)
-    $typeLabel.Size = New-Object System.Drawing.Size(120, 25)
-    $typeLabel.Text = "⚙️ Script Type:"
+    $typeLabel.Size = New-Object System.Drawing.Size(100, 25)
+    $typeLabel.Text = "⚙️ Type:"
     $typeLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $scriptTab.Controls.Add($typeLabel)
     
     $typeCombo = New-Object System.Windows.Forms.ComboBox
-    $typeCombo.Location = New-Object System.Drawing.Point(140, 68)
-    $typeCombo.Size = New-Object System.Drawing.Size(150, 25)
+    $typeCombo.Location = New-Object System.Drawing.Point(130, 68)
+    $typeCombo.Size = New-Object System.Drawing.Size(120, 25)
     $typeCombo.DropDownStyle = "DropDownList"
-    $typeCombo.Items.AddRange(@("start", "stop", "utility", "maintenance"))
+    $typeCombo.Items.AddRange(@("start", "stop", "utility"))
     $typeCombo.SelectedIndex = 0
     $scriptTab.Controls.Add($typeCombo)
     
-    # Category Selection
     $categoryLabel = New-Object System.Windows.Forms.Label
-    $categoryLabel.Location = New-Object System.Drawing.Point(310, 70)
+    $categoryLabel.Location = New-Object System.Drawing.Point(270, 70)
     $categoryLabel.Size = New-Object System.Drawing.Size(80, 25)
     $categoryLabel.Text = "🏷️ Category:"
     $categoryLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $scriptTab.Controls.Add($categoryLabel)
     
     $categoryCombo = New-Object System.Windows.Forms.ComboBox
-    $categoryCombo.Location = New-Object System.Drawing.Point(390, 68)
-    $categoryCombo.Size = New-Object System.Drawing.Size(120, 25)
+    $categoryCombo.Location = New-Object System.Drawing.Point(350, 68)
+    $categoryCombo.Size = New-Object System.Drawing.Size(150, 25)
     $categoryCombo.DropDownStyle = "DropDownList"
     $categoryCombo.Items.AddRange($config.categories)
     $categoryCombo.SelectedIndex = 0
     $scriptTab.Controls.Add($categoryCombo)
     
-    # Directory Selection with Browse
     $dirLabel = New-Object System.Windows.Forms.Label
     $dirLabel.Location = New-Object System.Drawing.Point(20, 110)
-    $dirLabel.Size = New-Object System.Drawing.Size(120, 25)
+    $dirLabel.Size = New-Object System.Drawing.Size(100, 25)
     $dirLabel.Text = "📁 Directory:"
     $dirLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $scriptTab.Controls.Add($dirLabel)
     
     $dirTextBox = New-Object System.Windows.Forms.TextBox
-    $dirTextBox.Location = New-Object System.Drawing.Point(140, 108)
+    $dirTextBox.Location = New-Object System.Drawing.Point(130, 108)
     $dirTextBox.Size = New-Object System.Drawing.Size(300, 25)
-    $dirTextBox.Font = New-Object System.Drawing.Font("Consolas", 9)
     $scriptTab.Controls.Add($dirTextBox)
     
     $browseButton = New-Object System.Windows.Forms.Button
-    $browseButton.Location = New-Object System.Drawing.Point(450, 107)
+    $browseButton.Location = New-Object System.Drawing.Point(440, 107)
     $browseButton.Size = New-Object System.Drawing.Size(60, 27)
     $browseButton.Text = "Browse"
     $browseButton.BackColor = $global:Theme.Secondary
@@ -542,23 +461,14 @@ function Show-EnhancedAddDialog {
     $browseButton.FlatStyle = "Flat"
     $browseButton.Add_Click({
         $folderDialog = New-Object System.Windows.Forms.FolderBrowserDialog
-        $folderDialog.SelectedPath = if ($dirTextBox.Text) { $dirTextBox.Text } else { (Get-Location).Path }
         if ($folderDialog.ShowDialog() -eq "OK") {
             $dirTextBox.Text = $folderDialog.SelectedPath
         }
     })
     $scriptTab.Controls.Add($browseButton)
     
-    # File Browser Integration
-    $fileSelectLabel = New-Object System.Windows.Forms.Label
-    $fileSelectLabel.Location = New-Object System.Drawing.Point(20, 150)
-    $fileSelectLabel.Size = New-Object System.Drawing.Size(150, 25)
-    $fileSelectLabel.Text = "🎯 Or Select Existing File:"
-    $fileSelectLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-    $scriptTab.Controls.Add($fileSelectLabel)
-    
     $fileSelectButton = New-Object System.Windows.Forms.Button
-    $fileSelectButton.Location = New-Object System.Drawing.Point(180, 148)
+    $fileSelectButton.Location = New-Object System.Drawing.Point(130, 148)
     $fileSelectButton.Size = New-Object System.Drawing.Size(120, 27)
     $fileSelectButton.Text = "Select File..."
     $fileSelectButton.BackColor = $global:Theme.Accent
@@ -566,130 +476,66 @@ function Show-EnhancedAddDialog {
     $fileSelectButton.FlatStyle = "Flat"
     $fileSelectButton.Add_Click({
         $fileDialog = New-Object System.Windows.Forms.OpenFileDialog
-        $fileDialog.Filter = "PowerShell Scripts (*.ps1)|*.ps1|All files (*.*)|*.*"
-        $fileDialog.InitialDirectory = if ($dirTextBox.Text) { $dirTextBox.Text } else { (Get-Location).Path }
+        $fileDialog.Filter = "PowerShell Scripts (*.ps1)|*.ps1"
         
         if ($fileDialog.ShowDialog() -eq "OK") {
-            $selectedFile = $fileDialog.FileName
-            $fileInfo = Get-Item $selectedFile
-            
-            # Auto-populate fields
-            $fileNameTextBox.Text = [System.IO.Path]::GetFileNameWithoutExtension($selectedFile)
+            $fileInfo = Get-Item $fileDialog.FileName
+            $fileNameTextBox.Text = [System.IO.Path]::GetFileNameWithoutExtension($fileDialog.FileName)
             $dirTextBox.Text = $fileInfo.DirectoryName
             
-            # Auto-detect type from filename
             $fileName = $fileInfo.Name.ToLower()
-            if ($fileName -like "*start*" -or $fileName -like "*startup*") {
+            if ($fileName -like "*start*") {
                 $typeCombo.SelectedItem = "start"
-            } elseif ($fileName -like "*stop*" -or $fileName -like "*kill*" -or $fileName -like "*shutdown*") {
+            } elseif ($fileName -like "*stop*" -or $fileName -like "*kill*") {
                 $typeCombo.SelectedItem = "stop"
             }
         }
     })
     $scriptTab.Controls.Add($fileSelectButton)
     
-    # Smart Validation Panel
-    $validationPanel = New-Object System.Windows.Forms.Panel
-    $validationPanel.Location = New-Object System.Drawing.Point(20, 190)
-    $validationPanel.Size = New-Object System.Drawing.Size(490, 120)
-    $validationPanel.BorderStyle = "FixedSingle"
-    $validationPanel.BackColor = [System.Drawing.Color]::FromArgb(248, 249, 250)
-    $scriptTab.Controls.Add($validationPanel)
-    
-    $validationLabel = New-Object System.Windows.Forms.Label
-    $validationLabel.Location = New-Object System.Drawing.Point(10, 10)
-    $validationLabel.Size = New-Object System.Drawing.Size(470, 20)
-    $validationLabel.Text = "🔍 File Validation Results"
-    $validationLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-    $validationPanel.Controls.Add($validationLabel)
-    
-    $validationTextBox = New-Object System.Windows.Forms.TextBox
-    $validationTextBox.Location = New-Object System.Drawing.Point(10, 35)
-    $validationTextBox.Size = New-Object System.Drawing.Size(470, 75)
-    $validationTextBox.Multiline = $true
-    $validationTextBox.ScrollBars = "Vertical"
-    $validationTextBox.ReadOnly = $true
-    $validationTextBox.BackColor = [System.Drawing.Color]::White
-    $validationTextBox.Font = New-Object System.Drawing.Font("Consolas", 8)
-    $validationTextBox.Text = "💡 Select or enter a file path to see validation results..."
-    $validationPanel.Controls.Add($validationTextBox)
-    
-    # Real-time validation
-    $validateScript = {
-        if ($fileNameTextBox.Text -and $dirTextBox.Text) {
-            $fullPath = Join-Path $dirTextBox.Text "$($fileNameTextBox.Text)$($extensionCombo.SelectedItem)"
-            $validation = Test-PowerShellScript $fullPath
-            
-            $validationText = "📊 Validation Score: $($validation.Score)/100`r`n"
-            $validationText += "Status: $(if ($validation.IsValid) { '✅ Valid' } else { '❌ Issues Found' })`r`n`r`n"
-            
-            if ($validation.Errors) {
-                $validationText += "❌ Errors:`r`n" + ($validation.Errors -join "`r`n") + "`r`n`r`n"
-            }
-            if ($validation.Warnings) {
-                $validationText += "⚠️ Warnings:`r`n" + ($validation.Warnings -join "`r`n") + "`r`n`r`n"
-            }
-            if ($validation.Suggestions) {
-                $validationText += "💡 Suggestions:`r`n" + ($validation.Suggestions -join "`r`n")
-            }
-            
-            $validationTextBox.Text = $validationText
-        }
-    }
-    
-    $fileNameTextBox.Add_TextChanged($validateScript)
-    $dirTextBox.Add_TextChanged($validateScript)
-    
-    # ═══════════════════════════════════════════════════════════════════════════
-    # ⚙️ APPLICATION TAB
-    # ═══════════════════════════════════════════════════════════════════════════
-    
+    # Application Tab
     $appTab = New-Object System.Windows.Forms.TabPage
     $appTab.Text = "⚙️ Application / EXE"
     $appTab.BackColor = $global:Theme.Surface
-    $appTab.Padding = New-Object System.Windows.Forms.Padding(15)
     $tabControl.TabPages.Add($appTab)
     
-    # Application Name and Extension
+    # Application fields
     $appNameLabel = New-Object System.Windows.Forms.Label
     $appNameLabel.Location = New-Object System.Drawing.Point(20, 30)
-    $appNameLabel.Size = New-Object System.Drawing.Size(120, 25)
+    $appNameLabel.Size = New-Object System.Drawing.Size(100, 25)
     $appNameLabel.Text = "⚙️ App Name:"
     $appNameLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $appTab.Controls.Add($appNameLabel)
     
     $appNameTextBox = New-Object System.Windows.Forms.TextBox
-    $appNameTextBox.Location = New-Object System.Drawing.Point(140, 28)
+    $appNameTextBox.Location = New-Object System.Drawing.Point(130, 28)
     $appNameTextBox.Size = New-Object System.Drawing.Size(280, 25)
     $appNameTextBox.Text = "Syncthing"
-    $appNameTextBox.Font = New-Object System.Drawing.Font("Consolas", 10)
     $appTab.Controls.Add($appNameTextBox)
     
     $appExtensionCombo = New-Object System.Windows.Forms.ComboBox
-    $appExtensionCombo.Location = New-Object System.Drawing.Point(430, 28)
+    $appExtensionCombo.Location = New-Object System.Drawing.Point(420, 28)
     $appExtensionCombo.Size = New-Object System.Drawing.Size(80, 25)
     $appExtensionCombo.DropDownStyle = "DropDownList"
     $appExtensionCombo.Items.AddRange(@(".exe", ".msi"))
     $appExtensionCombo.SelectedIndex = 0
     $appTab.Controls.Add($appExtensionCombo)
     
-    # Application Directory
     $appDirLabel = New-Object System.Windows.Forms.Label
     $appDirLabel.Location = New-Object System.Drawing.Point(20, 70)
-    $appDirLabel.Size = New-Object System.Drawing.Size(120, 25)
+    $appDirLabel.Size = New-Object System.Drawing.Size(100, 25)
     $appDirLabel.Text = "📁 Directory:"
     $appDirLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $appTab.Controls.Add($appDirLabel)
     
     $appDirTextBox = New-Object System.Windows.Forms.TextBox
-    $appDirTextBox.Location = New-Object System.Drawing.Point(140, 68)
+    $appDirTextBox.Location = New-Object System.Drawing.Point(130, 68)
     $appDirTextBox.Size = New-Object System.Drawing.Size(300, 25)
     $appDirTextBox.Text = "C:\Syncthing"
-    $appDirTextBox.Font = New-Object System.Drawing.Font("Consolas", 9)
     $appTab.Controls.Add($appDirTextBox)
     
     $appBrowseButton = New-Object System.Windows.Forms.Button
-    $appBrowseButton.Location = New-Object System.Drawing.Point(450, 67)
+    $appBrowseButton.Location = New-Object System.Drawing.Point(440, 67)
     $appBrowseButton.Size = New-Object System.Drawing.Size(60, 27)
     $appBrowseButton.Text = "Browse"
     $appBrowseButton.BackColor = $global:Theme.Secondary
@@ -697,23 +543,14 @@ function Show-EnhancedAddDialog {
     $appBrowseButton.FlatStyle = "Flat"
     $appBrowseButton.Add_Click({
         $folderDialog = New-Object System.Windows.Forms.FolderBrowserDialog
-        $folderDialog.SelectedPath = if ($appDirTextBox.Text) { $appDirTextBox.Text } else { "C:\" }
         if ($folderDialog.ShowDialog() -eq "OK") {
             $appDirTextBox.Text = $folderDialog.SelectedPath
         }
     })
     $appTab.Controls.Add($appBrowseButton)
     
-    # Application File Selection
-    $appFileLabel = New-Object System.Windows.Forms.Label
-    $appFileLabel.Location = New-Object System.Drawing.Point(20, 110)
-    $appFileLabel.Size = New-Object System.Drawing.Size(150, 25)
-    $appFileLabel.Text = "🎯 Select Application:"
-    $appFileLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-    $appTab.Controls.Add($appFileLabel)
-    
     $appFileSelectButton = New-Object System.Windows.Forms.Button
-    $appFileSelectButton.Location = New-Object System.Drawing.Point(180, 108)
+    $appFileSelectButton.Location = New-Object System.Drawing.Point(130, 110)
     $appFileSelectButton.Size = New-Object System.Drawing.Size(120, 27)
     $appFileSelectButton.Text = "Browse for EXE..."
     $appFileSelectButton.BackColor = $global:Theme.Primary
@@ -721,121 +558,49 @@ function Show-EnhancedAddDialog {
     $appFileSelectButton.FlatStyle = "Flat"
     $appFileSelectButton.Add_Click({
         $fileDialog = New-Object System.Windows.Forms.OpenFileDialog
-        $fileDialog.Filter = "Applications (*.exe)|*.exe|Installers (*.msi)|*.msi|All files (*.*)|*.*"
-        $fileDialog.InitialDirectory = if ($appDirTextBox.Text) { $appDirTextBox.Text } else { "C:\" }
+        $fileDialog.Filter = "Applications (*.exe)|*.exe|Installers (*.msi)|*.msi"
         
         if ($fileDialog.ShowDialog() -eq "OK") {
-            $selectedFile = $fileDialog.FileName
-            $fileInfo = Get-Item $selectedFile
-            
-            # Auto-populate fields
-            $appNameTextBox.Text = [System.IO.Path]::GetFileNameWithoutExtension($selectedFile)
+            $fileInfo = Get-Item $fileDialog.FileName
+            $appNameTextBox.Text = [System.IO.Path]::GetFileNameWithoutExtension($fileDialog.FileName)
             $appDirTextBox.Text = $fileInfo.DirectoryName
             $appExtensionCombo.SelectedItem = $fileInfo.Extension
         }
     })
     $appTab.Controls.Add($appFileSelectButton)
     
-    # Application Validation Panel
-    $appValidationPanel = New-Object System.Windows.Forms.Panel
-    $appValidationPanel.Location = New-Object System.Drawing.Point(20, 150)
-    $appValidationPanel.Size = New-Object System.Drawing.Size(490, 120)
-    $appValidationPanel.BorderStyle = "FixedSingle"
-    $appValidationPanel.BackColor = [System.Drawing.Color]::FromArgb(248, 249, 250)
-    $appTab.Controls.Add($appValidationPanel)
-    
-    $appValidationLabel = New-Object System.Windows.Forms.Label
-    $appValidationLabel.Location = New-Object System.Drawing.Point(10, 10)
-    $appValidationLabel.Size = New-Object System.Drawing.Size(470, 20)
-    $appValidationLabel.Text = "🔍 Application Validation Results"
-    $appValidationLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-    $appValidationPanel.Controls.Add($appValidationLabel)
-    
-    $appValidationTextBox = New-Object System.Windows.Forms.TextBox
-    $appValidationTextBox.Location = New-Object System.Drawing.Point(10, 35)
-    $appValidationTextBox.Size = New-Object System.Drawing.Size(470, 75)
-    $appValidationTextBox.Multiline = $true
-    $appValidationTextBox.ScrollBars = "Vertical"
-    $appValidationTextBox.ReadOnly = $true
-    $appValidationTextBox.BackColor = [System.Drawing.Color]::White
-    $appValidationTextBox.Font = New-Object System.Drawing.Font("Consolas", 8)
-    $appValidationTextBox.Text = "💡 Select an application to see validation results..."
-    $appValidationPanel.Controls.Add($appValidationTextBox)
-    
-    # Real-time app validation
-    $validateApp = {
-        if ($appNameTextBox.Text -and $appDirTextBox.Text) {
-            $fullPath = Join-Path $appDirTextBox.Text "$($appNameTextBox.Text)$($appExtensionCombo.SelectedItem)"
-            $validation = Test-ExecutableApp $fullPath
-            
-            $validationText = "📊 Validation Score: $($validation.Score)/100`r`n"
-            $validationText += "Status: $(if ($validation.IsValid) { '✅ Valid' } else { '❌ Issues Found' })`r`n`r`n"
-            
-            if ($validation.Errors) {
-                $validationText += "❌ Errors:`r`n" + ($validation.Errors -join "`r`n") + "`r`n`r`n"
-            }
-            if ($validation.Warnings) {
-                $validationText += "⚠️ Warnings:`r`n" + ($validation.Warnings -join "`r`n") + "`r`n`r`n"
-            }
-            if ($validation.Suggestions) {
-                $validationText += "💡 Info:`r`n" + ($validation.Suggestions -join "`r`n")
-            }
-            
-            $appValidationTextBox.Text = $validationText
-        }
-    }
-    
-    $appNameTextBox.Add_TextChanged($validateApp)
-    $appDirTextBox.Add_TextChanged($validateApp)
-    
-    # ═══════════════════════════════════════════════════════════════════════════
-    # 🎯 DIALOG BUTTONS
-    # ═══════════════════════════════════════════════════════════════════════════
-    
-    $buttonPanel = New-Object System.Windows.Forms.Panel
-    $buttonPanel.Location = New-Object System.Drawing.Point(20, 470)
-    $buttonPanel.Size = New-Object System.Drawing.Size(560, 50)
-    $buttonPanel.BackColor = $global:Theme.Light
-    $addForm.Controls.Add($buttonPanel)
-    
+    # Dialog Buttons
     $addButton = New-Object System.Windows.Forms.Button
-    $addButton.Location = New-Object System.Drawing.Point(400, 10)
+    $addButton.Location = New-Object System.Drawing.Point(420, 480)
     $addButton.Size = New-Object System.Drawing.Size(75, 30)
     $addButton.Text = "Add"
     $addButton.BackColor = $global:Theme.Secondary
     $addButton.ForeColor = [System.Drawing.Color]::White
     $addButton.FlatStyle = "Flat"
-    $addButton.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $addButton.DialogResult = "OK"
-    $buttonPanel.Controls.Add($addButton)
+    $addForm.Controls.Add($addButton)
     
     $cancelButton = New-Object System.Windows.Forms.Button
-    $cancelButton.Location = New-Object System.Drawing.Point(485, 10)
+    $cancelButton.Location = New-Object System.Drawing.Point(505, 480)
     $cancelButton.Size = New-Object System.Drawing.Size(75, 30)
     $cancelButton.Text = "Cancel"
     $cancelButton.BackColor = $global:Theme.TextMuted
     $cancelButton.ForeColor = [System.Drawing.Color]::White
     $cancelButton.FlatStyle = "Flat"
     $cancelButton.DialogResult = "Cancel"
-    $buttonPanel.Controls.Add($cancelButton)
+    $addForm.Controls.Add($cancelButton)
     
-    $addForm.AcceptButton = $addButton
-    $addForm.CancelButton = $cancelButton
-    
-    # Show dialog and process result
     $result = $addForm.ShowDialog()
     
     if ($result -eq "OK") {
         $isScript = ($tabControl.SelectedTab -eq $scriptTab)
         
         if ($isScript) {
-            # Process Script
             $fullPath = Join-Path $dirTextBox.Text "$($fileNameTextBox.Text)$($extensionCombo.SelectedItem)"
             $validation = Test-PowerShellScript $fullPath
             
             if (-not $validation.IsValid) {
-                $errorMsg = "Script validation failed:`n`n" + ($validation.Errors -join "`n")
-                [System.Windows.Forms.MessageBox]::Show($errorMsg, "Validation Error", "OK", "Error")
+                [System.Windows.Forms.MessageBox]::Show("Script validation failed:`n`n" + ($validation.Errors -join "`n"), "Validation Error", "OK", "Error")
                 $addForm.Dispose()
                 return $false
             }
@@ -854,13 +619,11 @@ function Show-EnhancedAddDialog {
                 created = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
             }
         } else {
-            # Process Application
             $fullPath = Join-Path $appDirTextBox.Text "$($appNameTextBox.Text)$($appExtensionCombo.SelectedItem)"
             $validation = Test-ExecutableApp $fullPath
             
             if (-not $validation.IsValid) {
-                $errorMsg = "Application validation failed:`n`n" + ($validation.Errors -join "`n")
-                [System.Windows.Forms.MessageBox]::Show($errorMsg, "Validation Error", "OK", "Error")
+                [System.Windows.Forms.MessageBox]::Show("Application validation failed:`n`n" + ($validation.Errors -join "`n"), "Validation Error", "OK", "Error")
                 $addForm.Dispose()
                 return $false
             }
@@ -880,18 +643,13 @@ function Show-EnhancedAddDialog {
             }
         }
         
-        # Add to config
         $config.scripts = @($config.scripts) + $newItem
         
         if (Save-ScriptConfig $config) {
             Add-LogEntry "Successfully added: $($newItem.name)" "Success"
-            [System.Windows.Forms.MessageBox]::Show(
-                "✅ Item added successfully!`n`n$($newItem.name)`n`nRestart ServerManager to see the new button.", 
-                "Success", "OK", "Information")
+            [System.Windows.Forms.MessageBox]::Show("✅ Item added successfully!`n`nRestart ServerManager to see the new button.", "Success", "OK", "Information")
             $addForm.Dispose()
             return $true
-        } else {
-            [System.Windows.Forms.MessageBox]::Show("Failed to save configuration.", "Save Error", "OK", "Error")
         }
     }
     
@@ -900,7 +658,7 @@ function Show-EnhancedAddDialog {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ⚙️ REVOLUTIONARY SETTINGS SYSTEM
+# ⚙️ SETTINGS SYSTEM
 # ═══════════════════════════════════════════════════════════════════════════════
 
 function Show-SettingsDialog {
@@ -908,41 +666,28 @@ function Show-SettingsDialog {
     
     $settingsForm = New-Object System.Windows.Forms.Form
     $settingsForm.Text = "⚙️ ServerManager V2 Settings"
-    $settingsForm.Size = New-Object System.Drawing.Size(500, 400)
+    $settingsForm.Size = New-Object System.Drawing.Size(500, 350)
     $settingsForm.StartPosition = "CenterParent"
     $settingsForm.FormBorderStyle = "FixedDialog"
     $settingsForm.MaximizeBox = $false
     $settingsForm.BackColor = $global:Theme.Light
     
-    # Settings categories using tabs
-    $settingsTabControl = New-Object System.Windows.Forms.TabControl
-    $settingsTabControl.Location = New-Object System.Drawing.Point(20, 20)
-    $settingsTabControl.Size = New-Object System.Drawing.Size(450, 300)
-    $settingsForm.Controls.Add($settingsTabControl)
-    
-    # General Settings Tab
-    $generalTab = New-Object System.Windows.Forms.TabPage
-    $generalTab.Text = "⚙️ General"
-    $generalTab.BackColor = $global:Theme.Surface
-    $settingsTabControl.TabPages.Add($generalTab)
-    
     # ServiceManager Path
     $pathLabel = New-Object System.Windows.Forms.Label
-    $pathLabel.Location = New-Object System.Drawing.Point(20, 30)
+    $pathLabel.Location = New-Object System.Drawing.Point(30, 30)
     $pathLabel.Size = New-Object System.Drawing.Size(150, 25)
     $pathLabel.Text = "🎯 ServiceManager Path:"
     $pathLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-    $generalTab.Controls.Add($pathLabel)
+    $settingsForm.Controls.Add($pathLabel)
     
     $pathTextBox = New-Object System.Windows.Forms.TextBox
-    $pathTextBox.Location = New-Object System.Drawing.Point(20, 60)
+    $pathTextBox.Location = New-Object System.Drawing.Point(30, 60)
     $pathTextBox.Size = New-Object System.Drawing.Size(350, 25)
     $pathTextBox.Text = $settings.serviceManagerPath
-    $pathTextBox.Font = New-Object System.Drawing.Font("Consolas", 9)
-    $generalTab.Controls.Add($pathTextBox)
+    $settingsForm.Controls.Add($pathTextBox)
     
     $pathBrowseButton = New-Object System.Windows.Forms.Button
-    $pathBrowseButton.Location = New-Object System.Drawing.Point(380, 59)
+    $pathBrowseButton.Location = New-Object System.Drawing.Point(390, 59)
     $pathBrowseButton.Size = New-Object System.Drawing.Size(50, 27)
     $pathBrowseButton.Text = "..."
     $pathBrowseButton.BackColor = $global:Theme.Primary
@@ -951,49 +696,37 @@ function Show-SettingsDialog {
     $pathBrowseButton.Add_Click({
         $fileDialog = New-Object System.Windows.Forms.OpenFileDialog
         $fileDialog.Filter = "PowerShell Scripts (*.ps1)|*.ps1"
-        $fileDialog.InitialDirectory = (Get-Location).Path
         if ($fileDialog.ShowDialog() -eq "OK") {
             $pathTextBox.Text = $fileDialog.FileName
         }
     })
-    $generalTab.Controls.Add($pathBrowseButton)
+    $settingsForm.Controls.Add($pathBrowseButton)
     
     # Default Script Location
     $scriptLocationLabel = New-Object System.Windows.Forms.Label
-    $scriptLocationLabel.Location = New-Object System.Drawing.Point(20, 100)
-    $scriptLocationLabel.Size = New-Object System.Drawing.Size(150, 25)
+    $scriptLocationLabel.Location = New-Object System.Drawing.Point(30, 100)
+    $scriptLocationLabel.Size = New-Object System.Drawing.Size(200, 25)
     $scriptLocationLabel.Text = "📁 Default Script Location:"
     $scriptLocationLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-    $generalTab.Controls.Add($scriptLocationLabel)
+    $settingsForm.Controls.Add($scriptLocationLabel)
     
     $scriptLocationTextBox = New-Object System.Windows.Forms.TextBox
-    $scriptLocationTextBox.Location = New-Object System.Drawing.Point(20, 130)
+    $scriptLocationTextBox.Location = New-Object System.Drawing.Point(30, 130)
     $scriptLocationTextBox.Size = New-Object System.Drawing.Size(350, 25)
     $scriptLocationTextBox.Text = $settings.defaultScriptLocation
-    $scriptLocationTextBox.Font = New-Object System.Drawing.Font("Consolas", 9)
-    $generalTab.Controls.Add($scriptLocationTextBox)
+    $settingsForm.Controls.Add($scriptLocationTextBox)
     
-    # Auto-organize scripts checkbox
+    # Auto-organize checkbox
     $autoOrganizeCheckBox = New-Object System.Windows.Forms.CheckBox
-    $autoOrganizeCheckBox.Location = New-Object System.Drawing.Point(20, 170)
-    $autoOrganizeCheckBox.Size = New-Object System.Drawing.Size(300, 25)
+    $autoOrganizeCheckBox.Location = New-Object System.Drawing.Point(30, 170)
+    $autoOrganizeCheckBox.Size = New-Object System.Drawing.Size(350, 25)
     $autoOrganizeCheckBox.Text = "🗂️ Auto-organize scripts into start/stop folders"
     $autoOrganizeCheckBox.Checked = $settings.autoOrganizeScripts
-    $autoOrganizeCheckBox.Font = New-Object System.Drawing.Font("Segoe UI", 10)
-    $generalTab.Controls.Add($autoOrganizeCheckBox)
-    
-    # Show advanced options checkbox
-    $advancedCheckBox = New-Object System.Windows.Forms.CheckBox
-    $advancedCheckBox.Location = New-Object System.Drawing.Point(20, 200)
-    $advancedCheckBox.Size = New-Object System.Drawing.Size(300, 25)
-    $advancedCheckBox.Text = "🔧 Show advanced options in interface"
-    $advancedCheckBox.Checked = $settings.showAdvancedOptions
-    $advancedCheckBox.Font = New-Object System.Drawing.Font("Segoe UI", 10)
-    $generalTab.Controls.Add($advancedCheckBox)
+    $settingsForm.Controls.Add($autoOrganizeCheckBox)
     
     # Buttons
     $saveButton = New-Object System.Windows.Forms.Button
-    $saveButton.Location = New-Object System.Drawing.Point(300, 340)
+    $saveButton.Location = New-Object System.Drawing.Point(280, 250)
     $saveButton.Size = New-Object System.Drawing.Size(75, 30)
     $saveButton.Text = "Save"
     $saveButton.BackColor = $global:Theme.Secondary
@@ -1003,7 +736,7 @@ function Show-SettingsDialog {
     $settingsForm.Controls.Add($saveButton)
     
     $cancelButton = New-Object System.Windows.Forms.Button
-    $cancelButton.Location = New-Object System.Drawing.Point(385, 340)
+    $cancelButton.Location = New-Object System.Drawing.Point(365, 250)
     $cancelButton.Size = New-Object System.Drawing.Size(75, 30)
     $cancelButton.Text = "Cancel"
     $cancelButton.BackColor = $global:Theme.TextMuted
@@ -1015,21 +748,113 @@ function Show-SettingsDialog {
     $result = $settingsForm.ShowDialog()
     
     if ($result -eq "OK") {
-        # Update settings
         $settings.serviceManagerPath = $pathTextBox.Text
         $settings.defaultScriptLocation = $scriptLocationTextBox.Text
         $settings.autoOrganizeScripts = $autoOrganizeCheckBox.Checked
-        $settings.showAdvancedOptions = $advancedCheckBox.Checked
         
         if (Save-AppSettings $settings) {
             Add-LogEntry "Settings saved successfully" "Success"
             [System.Windows.Forms.MessageBox]::Show("✅ Settings saved successfully!", "Settings", "OK", "Information")
-        } else {
-            [System.Windows.Forms.MessageBox]::Show("❌ Failed to save settings.", "Error", "OK", "Error")
         }
     }
     
     $settingsForm.Dispose()
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🗑️ ENHANCED REMOVE DIALOG
+# ═══════════════════════════════════════════════════════════════════════════════
+
+function Show-RemoveDialog {
+    param($config)
+    
+    $customServices = $config.scripts | Where-Object { -not $_.isBuiltIn }
+    if ($customServices.Count -eq 0) {
+        [System.Windows.Forms.MessageBox]::Show("No custom services to remove.`n(Built-in services cannot be removed)", "No Custom Services", "OK", "Information")
+        return $false
+    }
+    
+    $removeForm = New-Object System.Windows.Forms.Form
+    $removeForm.Text = "🗑️ Remove Service"
+    $removeForm.Size = New-Object System.Drawing.Size(500, 350)
+    $removeForm.StartPosition = "CenterParent"
+    $removeForm.FormBorderStyle = "FixedDialog"
+    $removeForm.MaximizeBox = $false
+    $removeForm.BackColor = $global:Theme.Light
+    
+    $headerLabel = New-Object System.Windows.Forms.Label
+    $headerLabel.Location = New-Object System.Drawing.Point(20, 20)
+    $headerLabel.Size = New-Object System.Drawing.Size(450, 30)
+    $headerLabel.Text = "🗑️ Select service to remove:"
+    $headerLabel.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+    $headerLabel.ForeColor = $global:Theme.Danger
+    $removeForm.Controls.Add($headerLabel)
+    
+    $listBox = New-Object System.Windows.Forms.ListBox
+    $listBox.Location = New-Object System.Drawing.Point(20, 60)
+    $listBox.Size = New-Object System.Drawing.Size(450, 180)
+    $listBox.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+    $listBox.BackColor = $global:Theme.Surface
+    
+    foreach ($service in $customServices) {
+        $displayText = "$($service.icon) $($service.name) - $(Split-Path $service.directory -Leaf)"
+        $listBox.Items.Add($displayText)
+    }
+    $removeForm.Controls.Add($listBox)
+    
+    $warningLabel = New-Object System.Windows.Forms.Label
+    $warningLabel.Location = New-Object System.Drawing.Point(20, 250)
+    $warningLabel.Size = New-Object System.Drawing.Size(450, 20)
+    $warningLabel.Text = "⚠️ Warning: This action cannot be undone!"
+    $warningLabel.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+    $warningLabel.ForeColor = $global:Theme.Danger
+    $removeForm.Controls.Add($warningLabel)
+    
+    $removeButton = New-Object System.Windows.Forms.Button
+    $removeButton.Location = New-Object System.Drawing.Point(310, 280)
+    $removeButton.Size = New-Object System.Drawing.Size(75, 30)
+    $removeButton.Text = "Remove"
+    $removeButton.BackColor = $global:Theme.Danger
+    $removeButton.ForeColor = [System.Drawing.Color]::White
+    $removeButton.FlatStyle = "Flat"
+    $removeButton.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+    $removeButton.DialogResult = "OK"
+    $removeForm.Controls.Add($removeButton)
+    
+    $cancelButton = New-Object System.Windows.Forms.Button
+    $cancelButton.Location = New-Object System.Drawing.Point(395, 280)
+    $cancelButton.Size = New-Object System.Drawing.Size(75, 30)
+    $cancelButton.Text = "Cancel"
+    $cancelButton.BackColor = $global:Theme.TextMuted
+    $cancelButton.ForeColor = [System.Drawing.Color]::White
+    $cancelButton.FlatStyle = "Flat"
+    $cancelButton.DialogResult = "Cancel"
+    $removeForm.Controls.Add($cancelButton)
+    
+    $result = $removeForm.ShowDialog()
+    
+    if ($result -eq "OK" -and $listBox.SelectedIndex -ge 0) {
+        $selectedService = $customServices[$listBox.SelectedIndex]
+        $confirm = [System.Windows.Forms.MessageBox]::Show(
+            "Remove '$($selectedService.name)'?`n`nThis action cannot be undone.", 
+            "Confirm Removal", "YesNo", "Warning")
+        
+        if ($confirm -eq "Yes") {
+            $config.scripts = $config.scripts | Where-Object { 
+                -not (($_.name -eq $selectedService.name) -and ($_.directory -eq $selectedService.directory))
+            }
+            
+            if (Save-ScriptConfig $config) {
+                Add-LogEntry "Removed: $($selectedService.name)" "Success"
+                [System.Windows.Forms.MessageBox]::Show("✅ Service removed successfully!`n`nRestart to update interface.", "Removed", "OK", "Information")
+                $removeForm.Dispose()
+                return $true
+            }
+        }
+    }
+    
+    $removeForm.Dispose()
+    return $false
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1040,11 +865,9 @@ function Execute-EnhancedService {
     param($service, $showPopup = $true)
     
     if ($service.mode -eq "Application") {
-        # Execute Application
         $fullPath = Join-Path $service.directory "$($service.fileName)$($service.extension)"
         
         Add-LogEntry "Launching application: $($service.name)" "Info"
-        Add-LogEntry "Path: $fullPath" "Info"
         
         if (-not (Test-Path $fullPath)) {
             $errorMsg = "Application not found: $fullPath"
@@ -1056,7 +879,6 @@ function Execute-EnhancedService {
         }
         
         try {
-            # Change to application directory and launch
             $startInfo = New-Object System.Diagnostics.ProcessStartInfo
             $startInfo.FileName = "powershell.exe"
             $startInfo.Arguments = "-NoExit -Command `"cd '$($service.directory)'; Write-Host '[APP] $($service.name)' -ForegroundColor Cyan; & '.\$($service.fileName)$($service.extension)'`""
@@ -1078,11 +900,9 @@ function Execute-EnhancedService {
             return $false
         }
     } else {
-        # Execute PowerShell Script (Enhanced from V1)
         $fullPath = Join-Path $service.directory "$($service.fileName)$($service.extension)"
         
         Add-LogEntry "Executing script: $($service.name)" "Info"
-        Add-LogEntry "Path: $fullPath" "Info"
         
         if (-not (Test-Path $fullPath)) {
             $errorMsg = "Script not found: $fullPath"
@@ -1095,10 +915,6 @@ function Execute-EnhancedService {
         
         try {
             if ($global:HasWindowsTerminal -and -not $showPopup) {
-                # For Start All - use tabs in current window
-                $tabId = [System.Guid]::NewGuid().ToString("N")[0..7] -join ""
-                $global:ActiveTabs[$service.name] = $tabId
-                
                 Start-Process -FilePath "wt" -ArgumentList @(
                     "new-tab",
                     "--title", "`"$($service.name)`"",
@@ -1106,7 +922,6 @@ function Execute-EnhancedService {
                     "-Command", "Set-Location '$($service.directory)'; Write-Host '[SCRIPT] $($service.name)' -ForegroundColor Green; & '.\$($service.fileName)$($service.extension)'"
                 )
             } else {
-                # Individual service - separate window
                 Start-Process -FilePath "powershell" -ArgumentList @(
                     "-NoExit",
                     "-Command",
@@ -1131,14 +946,150 @@ function Execute-EnhancedService {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 🛑 ENHANCED STOP ALL FUNCTION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+function Stop-AllServices {
+    param($config)
+    
+    Add-LogEntry "🛑 Stopping all services..." "Info"
+    $results = @()
+    
+    # Stop built-in services with enhanced detection
+    $builtInStops = $config.scripts | Where-Object { $_.isBuiltIn -and ($_.type -like "*stop*" -or $_.type -eq "mcp-stop" -or $_.type -eq "n8n-stop") }
+    foreach ($service in $builtInStops) {
+        $success = $false
+        $processCount = 0
+        
+        if ($service.type -eq "mcp-stop") {
+            # Enhanced MCP Server stopping
+            $portProcesses = netstat -ano 2>$null | findstr ":4000"
+            if ($portProcesses) {
+                $processIds = $portProcesses | ForEach-Object { ($_ -split '\s+')[-1] } | Select-Object -Unique | Where-Object { $_ -and $_ -ne "0" }
+                foreach ($processId in $processIds) {
+                    try {
+                        $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
+                        if ($process) {
+                            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+                            Add-LogEntry "Killed MCP process: $($process.ProcessName) (PID: $processId)" "Success"
+                            $processCount++
+                            $success = $true
+                        }
+                    } catch {
+                        Add-LogEntry "Could not kill PID $processId" "Warning"
+                    }
+                }
+            }
+            
+            # Also check for processes by name
+            $mcpProcesses = Get-Process | Where-Object { $_.ProcessName -like "*mcp*" -or $_.MainWindowTitle -like "*mcp*" } -ErrorAction SilentlyContinue
+            foreach ($process in $mcpProcesses) {
+                try {
+                    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                    Add-LogEntry "Killed MCP-related process: $($process.ProcessName)" "Success"
+                    $processCount++
+                    $success = $true
+                } catch { }
+            }
+            
+        } elseif ($service.type -eq "n8n-stop") {
+            # Enhanced n8n stopping
+            try {
+                # Stop Docker containers
+                $n8nDir = "C:\aiMain\Zoe\Dockern8n"
+                if (Test-Path $n8nDir) {
+                    Push-Location $n8nDir
+                    $dockerResult = docker-compose down 2>&1
+                    Pop-Location
+                    Add-LogEntry "Docker compose down completed" "Success"
+                    $processCount++
+                    $success = $true
+                }
+            } catch {
+                Add-LogEntry "Could not stop Docker containers" "Warning"
+            }
+            
+            # Stop processes on port 5678
+            $portProcesses = netstat -ano 2>$null | findstr ":5678"
+            if ($portProcesses) {
+                $processIds = $portProcesses | ForEach-Object { ($_ -split '\s+')[-1] } | Select-Object -Unique | Where-Object { $_ -and $_ -ne "0" }
+                foreach ($processId in $processIds) {
+                    try {
+                        $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
+                        if ($process) {
+                            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+                            Add-LogEntry "Killed n8n process: $($process.ProcessName) (PID: $processId)" "Success"
+                            $processCount++
+                            $success = $true
+                        }
+                    } catch { }
+                }
+            }
+            
+            # Stop ngrok processes
+            $ngrokProcesses = Get-Process -Name "ngrok" -ErrorAction SilentlyContinue
+            foreach ($process in $ngrokProcesses) {
+                try {
+                    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                    Add-LogEntry "Stopped ngrok process" "Success"
+                    $processCount++
+                    $success = $true
+                } catch { }
+            }
+        }
+        
+        if ($success) {
+            $results += "✅ $($service.name) ($processCount processes stopped)"
+        } else {
+            $results += "ℹ️ $($service.name) (no processes found)"
+        }
+        Start-Sleep 1
+    }
+    
+    # Stop custom stop services by executing their scripts
+    $customStops = $config.scripts | Where-Object { -not $_.isBuiltIn -and $_.type -like "*stop*" }
+    foreach ($service in $customStops) {
+        $success = Execute-EnhancedService $service $false
+        if ($success) {
+            $results += "✅ $($service.name)"
+        } else {
+            $results += "❌ $($service.name)"
+        }
+        Start-Sleep 1
+    }
+    
+    # Stop any applications that might be running
+    $applications = $config.scripts | Where-Object { $_.mode -eq "Application" }
+    foreach ($app in $applications) {
+        $appName = [System.IO.Path]::GetFileNameWithoutExtension($app.fileName)
+        $processes = Get-Process -Name $appName -ErrorAction SilentlyContinue
+        $killedCount = 0
+        
+        foreach ($process in $processes) {
+            try {
+                Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                Add-LogEntry "Stopped application: $($process.ProcessName)" "Success"
+                $killedCount++
+            } catch { }
+        }
+        
+        if ($killedCount -gt 0) {
+            $results += "✅ $($app.name) ($killedCount processes stopped)"
+        } else {
+            $results += "ℹ️ $($app.name) (not running)"
+        }
+    }
+    
+    $message = "🛑 Stop All Results:`n`n" + ($results -join "`n")
+    [System.Windows.Forms.MessageBox]::Show($message, "Stop All Complete", "OK", "Information")
+    Add-LogEntry "🛑 Stop All completed" "Success"
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # 🎮 MAIN APPLICATION INTERFACE
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Initialization
-Write-Host "╔═══════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║              🚀 SERVER MANAGER V2 - REVOLUTIONARY EDITION 🚀                ║" -ForegroundColor Cyan
-Write-Host "║                          ⚡ Initializing... ⚡                              ║" -ForegroundColor Cyan
-Write-Host "╚═══════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "🚀 ServerManager V2 - Final Edition Starting..." -ForegroundColor Cyan
 
 # Check Windows Terminal
 $global:HasWindowsTerminal = $false
@@ -1147,64 +1098,57 @@ try {
     $global:HasWindowsTerminal = $true
     Write-Host "✅ Windows Terminal detected" -ForegroundColor Green
 } catch {
-    Write-Host "⚠️ Windows Terminal not found - using standard PowerShell" -ForegroundColor Yellow
+    Write-Host "⚠️ Windows Terminal not found" -ForegroundColor Yellow
 }
 
 # Load configurations
 $config = Load-ScriptConfig
 $settings = Load-AppSettings
 
-# Create Revolutionary Main Form
+# Create Optimized Main Form
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "🚀 ServerManager V2 - Revolutionary Edition"
-$form.Size = New-Object System.Drawing.Size(900, 700)
-$form.MinimumSize = New-Object System.Drawing.Size(800, 600)
+$form.Text = "🚀 ServerManager V2 - Final Edition"
+$form.Size = New-Object System.Drawing.Size(1000, 650)
+$form.MinimumSize = New-Object System.Drawing.Size(900, 600)
 $form.StartPosition = "CenterScreen"
 $form.BackColor = $global:Theme.Light
-$form.Font = New-Object System.Drawing.Font("Segoe UI", 9)
 
-# Modern Header with Gradient Effect
+# Header Panel
 $headerPanel = New-Object System.Windows.Forms.Panel
 $headerPanel.Location = New-Object System.Drawing.Point(0, 0)
-$headerPanel.Size = New-Object System.Drawing.Size(900, 80)
+$headerPanel.Size = New-Object System.Drawing.Size(1000, 70)
 $headerPanel.BackColor = $global:Theme.Primary
 $headerPanel.Anchor = "Top,Left,Right"
 $form.Controls.Add($headerPanel)
 
 $titleLabel = New-Object System.Windows.Forms.Label
 $titleLabel.Location = New-Object System.Drawing.Point(30, 15)
-$titleLabel.Size = New-Object System.Drawing.Size(600, 35)
-$titleLabel.Text = "🚀 ServerManager V2 - Revolutionary Edition"
-$titleLabel.Font = New-Object System.Drawing.Font("Segoe UI", 18, [System.Drawing.FontStyle]::Bold)
+$titleLabel.Size = New-Object System.Drawing.Size(600, 30)
+$titleLabel.Text = "🚀 ServerManager V2 - Final Edition"
+$titleLabel.Font = New-Object System.Drawing.Font("Segoe UI", 16, [System.Drawing.FontStyle]::Bold)
 $titleLabel.ForeColor = [System.Drawing.Color]::White
-$titleLabel.BackColor = [System.Drawing.Color]::Transparent
 $headerPanel.Controls.Add($titleLabel)
 
 $subtitleLabel = New-Object System.Windows.Forms.Label
-$subtitleLabel.Location = New-Object System.Drawing.Point(30, 50)
+$subtitleLabel.Location = New-Object System.Drawing.Point(30, 45)
 $subtitleLabel.Size = New-Object System.Drawing.Size(600, 20)
 $subtitleLabel.Text = "⚡ Professional Application & Service Launcher ⚡"
-$subtitleLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$subtitleLabel.Font = New-Object System.Drawing.Font("Segoe UI", 9)
 $subtitleLabel.ForeColor = [System.Drawing.Color]::LightGray
-$subtitleLabel.BackColor = [System.Drawing.Color]::Transparent
 $headerPanel.Controls.Add($subtitleLabel)
 
-# Settings Dropdown (3-line menu) - REVOLUTIONARY FEATURE!
+# Settings Menu (3-line dropdown) 
 $settingsMenuButton = New-Object System.Windows.Forms.Button
-$settingsMenuButton.Location = New-Object System.Drawing.Point(820, 20)
+$settingsMenuButton.Location = New-Object System.Drawing.Point(920, 15)
 $settingsMenuButton.Size = New-Object System.Drawing.Size(50, 40)
 $settingsMenuButton.Text = "☰"
 $settingsMenuButton.Font = New-Object System.Drawing.Font("Segoe UI", 16, [System.Drawing.FontStyle]::Bold)
 $settingsMenuButton.BackColor = [System.Drawing.Color]::FromArgb(255, 255, 255, 30)
 $settingsMenuButton.ForeColor = [System.Drawing.Color]::White
 $settingsMenuButton.FlatStyle = "Flat"
-$settingsMenuButton.FlatAppearance.BorderSize = 1
-$settingsMenuButton.FlatAppearance.BorderColor = [System.Drawing.Color]::White
 $settingsMenuButton.Anchor = "Top,Right"
 $settingsMenuButton.Add_Click({
     $menu = New-Object System.Windows.Forms.ContextMenuStrip
-    $menu.BackColor = $global:Theme.Surface
-    $menu.Font = New-Object System.Drawing.Font("Segoe UI", 10)
     
     $settingsItem = New-Object System.Windows.Forms.ToolStripMenuItem
     $settingsItem.Text = "⚙️  Settings"
@@ -1214,8 +1158,7 @@ $settingsMenuButton.Add_Click({
     $restartItem = New-Object System.Windows.Forms.ToolStripMenuItem
     $restartItem.Text = "🔄 Restart Application"
     $restartItem.Add_Click({
-        $result = [System.Windows.Forms.MessageBox]::Show("Restart ServerManager V2?", "Restart", "YesNo", "Question")
-        if ($result -eq "Yes") {
+        if ([System.Windows.Forms.MessageBox]::Show("Restart ServerManager V2?", "Restart", "YesNo", "Question") -eq "Yes") {
             $form.Close()
             Start-Process -FilePath "powershell" -ArgumentList "-ExecutionPolicy Bypass -File `"$($MyInvocation.MyCommand.Path)`""
         }
@@ -1229,8 +1172,6 @@ $settingsMenuButton.Add_Click({
     $scriptsItem.Add_Click({
         if (Test-Path ".\scripts") {
             Start-Process "explorer.exe" -ArgumentList ".\scripts"
-        } else {
-            [System.Windows.Forms.MessageBox]::Show("Scripts folder not found", "Info", "OK", "Information")
         }
     })
     $menu.Items.Add($scriptsItem)
@@ -1240,11 +1181,10 @@ $settingsMenuButton.Add_Click({
     $exportItem.Add_Click({
         $saveDialog = New-Object System.Windows.Forms.SaveFileDialog
         $saveDialog.Filter = "JSON files (*.json)|*.json"
-        $saveDialog.DefaultExt = "json"
         $saveDialog.FileName = "servermanager-config-$(Get-Date -Format 'yyyyMMdd').json"
         if ($saveDialog.ShowDialog() -eq "OK") {
             Copy-Item $global:ConfigFile $saveDialog.FileName
-            [System.Windows.Forms.MessageBox]::Show("Configuration exported successfully!", "Export", "OK", "Information")
+            [System.Windows.Forms.MessageBox]::Show("Configuration exported!", "Export", "OK", "Information")
         }
     })
     $menu.Items.Add($exportItem)
@@ -1253,10 +1193,10 @@ $settingsMenuButton.Add_Click({
 })
 $headerPanel.Controls.Add($settingsMenuButton)
 
-# Enhanced Management Panel
+# Management Panel
 $managementPanel = New-Object System.Windows.Forms.Panel
-$managementPanel.Location = New-Object System.Drawing.Point(20, 90)
-$managementPanel.Size = New-Object System.Drawing.Size(860, 50)
+$managementPanel.Location = New-Object System.Drawing.Point(20, 80)
+$managementPanel.Size = New-Object System.Drawing.Size(960, 50)
 $managementPanel.BackColor = $global:Theme.Surface
 $managementPanel.BorderStyle = "FixedSingle"
 $managementPanel.Anchor = "Top,Left,Right"
@@ -1285,8 +1225,9 @@ $removeButton.BackColor = $global:Theme.Danger
 $removeButton.ForeColor = [System.Drawing.Color]::White
 $removeButton.FlatStyle = "Flat"
 $removeButton.Add_Click({
-    # Enhanced remove dialog (implementation would go here)
-    [System.Windows.Forms.MessageBox]::Show("Remove functionality - Enhanced version coming soon!", "Info", "OK", "Information")
+    if (Show-RemoveDialog $config) {
+        Add-LogEntry "Service removed - restart to see changes" "Info"
+    }
 })
 $managementPanel.Controls.Add($removeButton)
 
@@ -1305,34 +1246,33 @@ $refreshButton.Add_Click({
 })
 $managementPanel.Controls.Add($refreshButton)
 
-# Revolutionary Services Panel with Categories
+# OPTIMIZED HORIZONTAL LAYOUT - Services on Left, Logs on Right
 $servicesPanel = New-Object System.Windows.Forms.Panel
-$servicesPanel.Location = New-Object System.Drawing.Point(20, 150)
-$servicesPanel.Size = New-Object System.Drawing.Size(860, 280)
+$servicesPanel.Location = New-Object System.Drawing.Point(20, 140)
+$servicesPanel.Size = New-Object System.Drawing.Size(480, 350)
 $servicesPanel.BorderStyle = "FixedSingle"
 $servicesPanel.BackColor = $global:Theme.Surface
 $servicesPanel.AutoScroll = $true
-$servicesPanel.Anchor = "Top,Left,Right"
+$servicesPanel.Anchor = "Top,Left,Bottom"
 $form.Controls.Add($servicesPanel)
 
 # Create service buttons with enhanced styling
 $buttonY = 15
-$buttonHeight = 40
+$buttonHeight = 35
 $buttonSpacing = 5
-$categorySpacing = 25
+$categorySpacing = 20
 
-# Group by category for better organization
+# Group by category
 $groupedServices = $config.scripts | Group-Object category
 
 foreach ($categoryGroup in $groupedServices) {
     # Category header
     $categoryLabel = New-Object System.Windows.Forms.Label
     $categoryLabel.Location = New-Object System.Drawing.Point(15, $buttonY)
-    $categoryLabel.Size = New-Object System.Drawing.Size(820, 20)
+    $categoryLabel.Size = New-Object System.Drawing.Size(440, 18)
     $categoryLabel.Text = "📁 $($categoryGroup.Name)"
-    $categoryLabel.Font = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
+    $categoryLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $categoryLabel.ForeColor = $global:Theme.Primary
-    $categoryLabel.Anchor = "Top,Left,Right"
     $servicesPanel.Controls.Add($categoryLabel)
     
     $buttonY += $categorySpacing
@@ -1340,16 +1280,14 @@ foreach ($categoryGroup in $groupedServices) {
     foreach ($service in $categoryGroup.Group) {
         $button = New-Object System.Windows.Forms.Button
         $button.Location = New-Object System.Drawing.Point(15, $buttonY)
-        $button.Size = New-Object System.Drawing.Size(820, $buttonHeight)
+        $button.Size = New-Object System.Drawing.Size(440, $buttonHeight)
         $button.Text = "$($service.icon) $($service.name) $(if ($service.mode -eq 'Application') { '⚙️' } else { '📜' })"
         $button.BackColor = [System.Drawing.Color]::$($service.color)
-        $button.Font = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
+        $button.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
         $button.FlatStyle = "Flat"
-        $button.FlatAppearance.BorderSize = 0
         $button.Tag = $service
-        $button.Anchor = "Top,Left,Right"
         $button.TextAlign = "MiddleLeft"
-        $button.Padding = New-Object System.Windows.Forms.Padding(20, 0, 0, 0)
+        $button.Padding = New-Object System.Windows.Forms.Padding(15, 0, 0, 0)
         
         # Enhanced hover effects
         $button.Add_MouseEnter({
@@ -1359,33 +1297,28 @@ foreach ($categoryGroup in $groupedServices) {
             $this.BackColor = [System.Drawing.Color]::$($this.Tag.color)
         })
         
-        # Click event with enhanced execution
+        # Click event
         $button.Add_Click({
             $svc = $this.Tag
             
-            # Handle built-in services with special logic
             if ($svc.isBuiltIn -and $svc.type -eq "mcp-stop") {
-                # Keep existing MCP stop logic
-                Add-LogEntry "Stopping MCP Server (port 4000)..." "Info"
-                $portProcesses = netstat -ano | findstr ":4000"
+                # MCP stop logic
+                Add-LogEntry "Stopping MCP Server..." "Info"
+                $portProcesses = netstat -ano 2>$null | findstr ":4000"
                 if ($portProcesses) {
                     $processIds = $portProcesses | ForEach-Object { ($_ -split '\s+')[-1] } | Select-Object -Unique
                     foreach ($processId in $processIds) {
                         if ($processId -and $processId -ne "0") {
                             try {
-                                taskkill /PID $processId /F 2>$null
+                                Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
                                 Add-LogEntry "Killed MCP process PID $processId" "Success"
-                            } catch {
-                                Add-LogEntry "Could not kill PID $processId" "Warning"
-                            }
+                            } catch { }
                         }
                     }
-                } else {
-                    Add-LogEntry "No MCP processes found on port 4000" "Info"
                 }
             } elseif ($svc.isBuiltIn -and $svc.type -eq "n8n-stop") {
-                # Keep existing n8n stop logic
-                Add-LogEntry "Stopping n8n environment..." "Info"
+                # n8n stop logic
+                Add-LogEntry "Stopping n8n..." "Info"
                 try {
                     $n8nDir = "C:\aiMain\Zoe\Dockern8n"
                     if (Test-Path $n8nDir) {
@@ -1394,11 +1327,8 @@ foreach ($categoryGroup in $groupedServices) {
                         Pop-Location
                         Add-LogEntry "Docker compose down completed" "Success"
                     }
-                } catch {
-                    Add-LogEntry "Could not stop containers" "Warning"
-                }
+                } catch { }
             } else {
-                # Use enhanced execution for all other services
                 Execute-EnhancedService $svc $true
             }
         })
@@ -1407,29 +1337,28 @@ foreach ($categoryGroup in $groupedServices) {
         $buttonY += ($buttonHeight + $buttonSpacing)
     }
     
-    $buttonY += 10  # Extra spacing between categories
+    $buttonY += 10
 }
 
-# Enhanced Control Panel
+# Control Panel (Below Services)
 $controlPanel = New-Object System.Windows.Forms.Panel
-$controlPanel.Location = New-Object System.Drawing.Point(20, 440)
-$controlPanel.Size = New-Object System.Drawing.Size(860, 60)
+$controlPanel.Location = New-Object System.Drawing.Point(20, 500)
+$controlPanel.Size = New-Object System.Drawing.Size(480, 50)
 $controlPanel.BackColor = $global:Theme.Dark
 $controlPanel.BorderStyle = "FixedSingle"
-$controlPanel.Anchor = "Top,Left,Right"
+$controlPanel.Anchor = "Bottom,Left"
 $form.Controls.Add($controlPanel)
 
-# Quick action buttons with modern styling
 $startAllButton = New-Object System.Windows.Forms.Button
-$startAllButton.Location = New-Object System.Drawing.Point(15, 15)
-$startAllButton.Size = New-Object System.Drawing.Size(100, 30)
+$startAllButton.Location = New-Object System.Drawing.Point(15, 10)
+$startAllButton.Size = New-Object System.Drawing.Size(90, 30)
 $startAllButton.Text = "🚀 Start All"
 $startAllButton.BackColor = $global:Theme.Secondary
 $startAllButton.ForeColor = [System.Drawing.Color]::White
 $startAllButton.FlatStyle = "Flat"
-$startAllButton.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$startAllButton.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
 $startAllButton.Add_Click({
-    Add-LogEntry "Starting all services..." "Info"
+    Add-LogEntry "🚀 Starting all services..." "Info"
     $startServices = $config.scripts | Where-Object { $_.type -like "*start*" -or $_.mode -eq "Application" }
     $results = @()
     
@@ -1443,36 +1372,35 @@ $startAllButton.Add_Click({
         Start-Sleep 1
     }
     
-    $message = "Start All Results:`n`n" + ($results -join "`n")
+    $message = "🚀 Start All Results:`n`n" + ($results -join "`n")
     [System.Windows.Forms.MessageBox]::Show($message, "Start All Complete", "OK", "Information")
-    Add-LogEntry "Start All completed" "Success"
+    Add-LogEntry "🚀 Start All completed" "Success"
 })
 $controlPanel.Controls.Add($startAllButton)
 
 $stopAllButton = New-Object System.Windows.Forms.Button
-$stopAllButton.Location = New-Object System.Drawing.Point(125, 15)
-$stopAllButton.Size = New-Object System.Drawing.Size(100, 30)
+$stopAllButton.Location = New-Object System.Drawing.Point(115, 10)
+$stopAllButton.Size = New-Object System.Drawing.Size(90, 30)
 $stopAllButton.Text = "🛑 Stop All"
 $stopAllButton.BackColor = $global:Theme.Danger
 $stopAllButton.ForeColor = [System.Drawing.Color]::White
 $stopAllButton.FlatStyle = "Flat"
-$stopAllButton.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$stopAllButton.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
 $stopAllButton.Add_Click({
-    Add-LogEntry "Stopping all services..." "Info"
-    [System.Windows.Forms.MessageBox]::Show("Enhanced Stop All functionality - Implementation in progress!", "Info", "OK", "Information")
+    Stop-AllServices $config
 })
 $controlPanel.Controls.Add($stopAllButton)
 
 $testButton = New-Object System.Windows.Forms.Button
-$testButton.Location = New-Object System.Drawing.Point(235, 15)
-$testButton.Size = New-Object System.Drawing.Size(120, 30)
+$testButton.Location = New-Object System.Drawing.Point(215, 10)
+$testButton.Size = New-Object System.Drawing.Size(100, 30)
 $testButton.Text = "🔍 Validate All"
 $testButton.BackColor = $global:Theme.Accent
 $testButton.ForeColor = [System.Drawing.Color]::White
 $testButton.FlatStyle = "Flat"
-$testButton.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+$testButton.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
 $testButton.Add_Click({
-    Add-LogEntry "Validating all items..." "Info"
+    Add-LogEntry "🔍 Validating all items..." "Info"
     $results = @()
     
     foreach ($service in $config.scripts) {
@@ -1491,14 +1419,14 @@ $testButton.Add_Click({
         }
     }
     
-    $message = "Validation Results:`n`n" + ($results -join "`n")
+    $message = "🔍 Validation Results:`n`n" + ($results -join "`n")
     [System.Windows.Forms.MessageBox]::Show($message, "Validation Complete", "OK", "Information")
 })
 $controlPanel.Controls.Add($testButton)
 
 $clearLogsButton = New-Object System.Windows.Forms.Button
-$clearLogsButton.Location = New-Object System.Drawing.Point(365, 15)
-$clearLogsButton.Size = New-Object System.Drawing.Size(100, 30)
+$clearLogsButton.Location = New-Object System.Drawing.Point(325, 10)
+$clearLogsButton.Size = New-Object System.Drawing.Size(90, 30)
 $clearLogsButton.Text = "🧹 Clear Logs"
 $clearLogsButton.BackColor = $global:Theme.TextMuted
 $clearLogsButton.ForeColor = [System.Drawing.Color]::White
@@ -1510,37 +1438,37 @@ $clearLogsButton.Add_Click({
 })
 $controlPanel.Controls.Add($clearLogsButton)
 
-# Enhanced Logs Section
+# OPTIMIZED LOGS PANEL (Right Side)
 $logsLabel = New-Object System.Windows.Forms.Label
-$logsLabel.Location = New-Object System.Drawing.Point(20, 510)
+$logsLabel.Location = New-Object System.Drawing.Point(520, 140)
 $logsLabel.Size = New-Object System.Drawing.Size(200, 25)
-$logsLabel.Text = "📋 Activity Logs & System Status"
-$logsLabel.Font = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
+$logsLabel.Text = "📋 Service Logs"
+$logsLabel.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $logsLabel.ForeColor = $global:Theme.Text
-$logsLabel.Anchor = "Top,Left"
+$logsLabel.Anchor = "Top,Right"
 $form.Controls.Add($logsLabel)
 
 $global:LogTextBox = New-Object System.Windows.Forms.RichTextBox
-$global:LogTextBox.Location = New-Object System.Drawing.Point(20, 540)
-$global:LogTextBox.Size = New-Object System.Drawing.Size(860, 130)
+$global:LogTextBox.Location = New-Object System.Drawing.Point(520, 165)
+$global:LogTextBox.Size = New-Object System.Drawing.Size(460, 385)
 $global:LogTextBox.Multiline = $true
 $global:LogTextBox.ScrollBars = "Vertical"
 $global:LogTextBox.ReadOnly = $true
 $global:LogTextBox.BackColor = [System.Drawing.Color]::Black
 $global:LogTextBox.Font = New-Object System.Drawing.Font("Consolas", 9)
-$global:LogTextBox.Anchor = "Top,Bottom,Left,Right"
+$global:LogTextBox.BorderStyle = "FixedSingle"
+$global:LogTextBox.Anchor = "Top,Bottom,Right"
 $form.Controls.Add($global:LogTextBox)
 
-# Initialize startup logs
-Add-LogEntry "🚀 ServerManager V2 Revolutionary Edition started" "Success"
+# Initialize logs
+Add-LogEntry "🚀 ServerManager V2 Final Edition started" "Success"
 Add-LogEntry "Loaded $($config.scripts.Count) items from configuration" "Info"
 Add-LogEntry "Windows Terminal: $(if ($global:HasWindowsTerminal) { 'Available ✅' } else { 'Not found ⚠️' })" "Info"
-Add-LogEntry "Configuration version: $($config.version)" "Info"
 Add-LogEntry "Ready for action! 🎯" "Success"
 
-Write-Host "✅ Showing ServerManager V2 Revolutionary Edition..." -ForegroundColor Green
+Write-Host "✅ Showing ServerManager V2 Final Edition..." -ForegroundColor Green
 
-# Show the revolutionary form
+# Show the form
 [System.Windows.Forms.Application]::Run($form)
 
-Write-Host "🎯 ServerManager V2 Revolutionary Edition closed" -ForegroundColor Cyan
+Write-Host "🎯 ServerManager V2 Final Edition closed" -ForegroundColor Cyan
