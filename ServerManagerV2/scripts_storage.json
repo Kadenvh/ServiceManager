@@ -1,40 +1,97 @@
-[
-  true,
-  {
-    "scripts": [
-      {
-        "type": "mcp-start",
-        "name": "[*] Start MCP Server",
-        "scriptFile": "MCP-Startup.ps1",
-        "isBuiltIn": true,
-        "color": "LightGreen",
-        "directory": "Zoe\\DockerMCP"
-      },
-      {
-        "type": "mcp-stop",
-        "name": "[X] Stop MCP Server",
-        "scriptFile": "MCP-Kill.ps1",
-        "isBuiltIn": true,
-        "color": "LightCoral",
-        "directory": "Zoe\\DockerMCP"
-      },
-      {
-        "type": "n8n-start",
-        "name": "[*] Start n8n",
-        "scriptFile": "n8nStartup.ps1",
-        "isBuiltIn": true,
-        "color": "LightBlue",
-        "directory": "Zoe\\Dockern8n"
-      },
-      {
-        "type": "n8n-stop",
-        "name": "[X] Stop n8n",
-        "scriptFile": "n8nKill.ps1",
-        "isBuiltIn": true,
-        "color": "LightCoral",
-        "directory": "Zoe\\Dockern8n"
-      }
-    ],
-    "version": "1.0"
+{
+  "version": "2.0",
+  "lastModified": "2025-08-18T13:10:37Z",
+  "scripts": [
+    {
+      "name": "[*] Start MCP Server",
+      "fileName": "MCP-Startup",
+      "extension": ".ps1",
+      "type": "start",
+      "mode": "Script",
+      "color": "LightGreen",
+      "directory": "C:\\aiMain\\Zoe\\DockerMCP",
+      "isBuiltIn": true,
+      "icon": "🔵",
+      "category": "AI Services",
+      "created": "2025-08-18T16:30:00Z"
+    },
+    {
+      "name": "[X] Stop MCP Server",
+      "fileName": "MCP-Kill",
+      "extension": ".ps1",
+      "type": "mcp-stop",
+      "mode": "Script",
+      "color": "LightCoral",
+      "directory": "C:\\aiMain\\Zoe\\DockerMCP",
+      "isBuiltIn": true,
+      "icon": "🔴",
+      "category": "AI Services",
+      "created": "2025-08-18T16:30:00Z"
+    },
+    {
+      "name": "[*] Start n8n",
+      "fileName": "n8nStartup",
+      "extension": ".ps1",
+      "type": "start",
+      "mode": "Script",
+      "color": "LightBlue",
+      "directory": "C:\\aiMain\\Zoe\\Dockern8n",
+      "isBuiltIn": true,
+      "icon": "🌐",
+      "category": "Automation",
+      "created": "2025-08-18T16:30:00Z"
+    },
+    {
+      "name": "[X] Stop n8n",
+      "fileName": "n8nKill",
+      "extension": ".ps1",
+      "type": "n8n-stop",
+      "mode": "Script",
+      "color": "LightCoral",
+      "directory": "C:\\aiMain\\Zoe\\Dockern8n",
+      "isBuiltIn": true,
+      "icon": "🔴",
+      "category": "Automation",
+      "created": "2025-08-18T16:30:00Z"
+    },
+    {
+      "name": "[⚙️] Syncthing",
+      "fileName": "Syncthing",
+      "extension": ".exe",
+      "type": "application",
+      "mode": "Application",
+      "color": "LightBlue",
+      "directory": "C:\\Syncthing",
+      "isBuiltIn": false,
+      "icon": "⚙️",
+      "category": "Applications",
+      "created": "2025-08-18T16:30:00Z"
+    },
+    {
+      "type": "application",
+      "fileName": "syncthing",
+      "color": "LightBlue",
+      "extension": ".exe",
+      "name": "[⚙️] syncthing",
+      "created": "2025-08-18T13:10:37Z",
+      "isBuiltIn": false,
+      "icon": "⚙️",
+      "mode": "Application",
+      "directory": "C:\\Syncthing",
+      "category": "Applications"
+    }
+  ],
+  "categories": [
+    "AI Services",
+    "Automation",
+    "Development",
+    "System",
+    "Applications",
+    "Custom"
+  ],
+  "statistics": {
+    "totalExecutions": 0,
+    "lastUsed": null,
+    "favoriteScripts": []
   }
-]
+}

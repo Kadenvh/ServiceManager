@@ -1,0 +1,13 @@
+{
+  "version": "2.0",
+  "serviceManagerPath": ".\\ServerManager-V2.ps1",
+  "defaultScriptLocation": ".\\scripts\\",
+  "autoOrganizeScripts": true,
+  "showAdvancedOptions": true,
+  "theme": "Modern",
+  "startInFullscreen": false,
+  "enableNotifications": true,
+  "logLevel": "Info",
+  "autoCheckUpdates": true,
+  "lastConfigUpdate": "2025-08-18T16:30:00Z"
+}
