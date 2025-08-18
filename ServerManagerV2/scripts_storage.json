@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastModified": "2025-08-18T13:10:37Z",
+  "lastModified": "2025-08-18T14:51:48Z",
   "scripts": [
     {
       "name": "[*] Start MCP Server",
@@ -53,32 +53,6 @@
       "icon": "🔴",
       "category": "Automation",
       "created": "2025-08-18T16:30:00Z"
-    },
-    {
-      "name": "[⚙️] Syncthing",
-      "fileName": "Syncthing",
-      "extension": ".exe",
-      "type": "application",
-      "mode": "Application",
-      "color": "LightBlue",
-      "directory": "C:\\Syncthing",
-      "isBuiltIn": false,
-      "icon": "⚙️",
-      "category": "Applications",
-      "created": "2025-08-18T16:30:00Z"
-    },
-    {
-      "type": "application",
-      "fileName": "syncthing",
-      "color": "LightBlue",
-      "extension": ".exe",
-      "name": "[⚙️] syncthing",
-      "created": "2025-08-18T13:10:37Z",
-      "isBuiltIn": false,
-      "icon": "⚙️",
-      "mode": "Application",
-      "directory": "C:\\Syncthing",
-      "category": "Applications"
     }
   ],
   "categories": [

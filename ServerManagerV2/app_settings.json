@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "serviceManagerPath": ".\\ServerManager-V2.ps1",
+  "serviceManagerPath": "C:\\aiMain\\Projects\\ServerManager\\ServerManagerV2\\ServerManager-V2.ps1",
   "defaultScriptLocation": ".\\scripts\\",
   "autoOrganizeScripts": true,
   "showAdvancedOptions": true,
