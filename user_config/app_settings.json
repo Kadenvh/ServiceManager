@@ -1,0 +1,8 @@
+{
+  "autoOrganizeScripts": true,
+  "enableNotifications": true,
+  "serviceManagerPath": ".\\ServerManager-V2.ps1",
+  "version": "2.0",
+  "defaultScriptLocation": ".\\scripts\\",
+  "theme": "Modern"
+}

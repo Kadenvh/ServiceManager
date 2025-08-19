@@ -1,58 +1,53 @@
 {
-  "version": "2.0",
-  "lastModified": "2025-08-18T14:51:48Z",
+  "lastModified": "2025-08-18T15:00:29Z",
   "scripts": [
     {
-      "name": "[*] Start MCP Server",
-      "fileName": "MCP-Startup",
-      "extension": ".ps1",
       "type": "start",
       "mode": "Script",
       "color": "LightGreen",
+      "extension": ".ps1",
+      "name": "[*] Start MCP Server",
       "directory": "C:\\aiMain\\Zoe\\DockerMCP",
+      "fileName": "MCP-Startup",
       "isBuiltIn": true,
       "icon": "🔵",
-      "category": "AI Services",
-      "created": "2025-08-18T16:30:00Z"
+      "category": "AI Services"
     },
     {
-      "name": "[X] Stop MCP Server",
-      "fileName": "MCP-Kill",
-      "extension": ".ps1",
-      "type": "mcp-stop",
+      "type": "stop",
       "mode": "Script",
       "color": "LightCoral",
+      "extension": ".ps1",
+      "name": "[X] Stop MCP Server",
       "directory": "C:\\aiMain\\Zoe\\DockerMCP",
+      "fileName": "MCP-Kill",
       "isBuiltIn": true,
       "icon": "🔴",
-      "category": "AI Services",
-      "created": "2025-08-18T16:30:00Z"
+      "category": "AI Services"
     },
     {
-      "name": "[*] Start n8n",
-      "fileName": "n8nStartup",
-      "extension": ".ps1",
       "type": "start",
       "mode": "Script",
       "color": "LightBlue",
+      "extension": ".ps1",
+      "name": "[*] Start n8n",
       "directory": "C:\\aiMain\\Zoe\\Dockern8n",
+      "fileName": "n8nStartup",
       "isBuiltIn": true,
       "icon": "🌐",
-      "category": "Automation",
-      "created": "2025-08-18T16:30:00Z"
+      "category": "Automation"
     },
     {
-      "name": "[X] Stop n8n",
-      "fileName": "n8nKill",
-      "extension": ".ps1",
-      "type": "n8n-stop",
+      "type": "stop",
       "mode": "Script",
       "color": "LightCoral",
+      "extension": ".ps1",
+      "name": "[X] Stop n8n",
       "directory": "C:\\aiMain\\Zoe\\Dockern8n",
+      "fileName": "n8nKill",
       "isBuiltIn": true,
       "icon": "🔴",
-      "category": "Automation",
-      "created": "2025-08-18T16:30:00Z"
+      "category": "Automation"
     }
   ],
   "categories": [
@@ -60,12 +55,11 @@
     "Automation",
     "Development",
     "System",
-    "Applications",
-    "Custom"
+    "Applications"
   ],
+  "version": "2.0",
   "statistics": {
     "totalExecutions": 0,
-    "lastUsed": null,
     "favoriteScripts": []
   }
 }
