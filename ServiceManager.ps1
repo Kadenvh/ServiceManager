@@ -1,13 +1,99 @@
 # ╔═══════════════════════════════════════════════════════════════════════════════╗
-# ║                    🚀 SERVER MANAGER V2 - FINAL EDITION 🚀                  ║
+# ║                         🚀 SERVICE MANAGER 🚀                               ║
 # ║                          ⚡ Built for Power Users ⚡                         ║
 # ╚═══════════════════════════════════════════════════════════════════════════════╝
+
+# Set working directory to script location
+$scriptPath = $MyInvocation.MyCommand.Path
+$scriptDir = Split-Path -Parent $scriptPath
+Set-Location -Path $scriptDir
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 [System.Windows.Forms.Application]::EnableVisualStyles()
 [System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🔧 SETUP CHECK & INITIALIZATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+Write-Host "🚀 ServiceManager Starting..." -ForegroundColor Cyan
+
+# Check if setup script exists
+if (-not (Test-Path ".\ServiceManager-PSADMIN-setup.ps1")) {
+    Write-Host "❌ Setup script not found" -ForegroundColor Red
+    [System.Windows.Forms.MessageBox]::Show(
+        "ServiceManager-PSADMIN-setup.ps1 not found.`n`nPlease ensure all required files are present in the directory.",
+        "Setup Required",
+        "OK",
+        "Error"
+    )
+    exit 1
+}
+
+# Check if user_config exists, if not run setup
+if (-not (Test-Path ".\user_config")) {
+    Write-Host "📁 User configuration not found - running setup..." -ForegroundColor Yellow
+    
+    # Run setup wizard
+    try {
+        $setupResult = & ".\ServiceManager-PSADMIN-setup.ps1" -IntegratedSetup
+        if (-not $setupResult) {
+            Write-Host "❌ Setup failed or was cancelled" -ForegroundColor Red
+            [System.Windows.Forms.MessageBox]::Show(
+                "Setup was not completed.`n`nPlease run ServiceManager-PSADMIN-setup.ps1 to configure the application.",
+                "Setup Required",
+                "OK",
+                "Warning"
+            )
+            exit 1
+        }
+    } catch {
+        Write-Host "❌ Setup failed to run: $($_.Exception.Message)" -ForegroundColor Red
+        [System.Windows.Forms.MessageBox]::Show(
+            "Failed to run setup:`n`n$($_.Exception.Message)`n`nPlease run ServiceManager-PSADMIN-setup.ps1 manually.",
+            "Setup Error",
+            "OK",
+            "Error"
+        )
+        exit 1
+    }
+}
+
+# Verify user configuration files exist and are valid
+$configFiles = @(
+    @{ Path = ".\user_config\scripts_storage.json"; Name = "Scripts Storage" },
+    @{ Path = ".\user_config\app_settings.json"; Name = "App Settings" }
+)
+
+foreach ($file in $configFiles) {
+    if (-not (Test-Path $file.Path)) {
+        Write-Host "❌ $($file.Name) file missing" -ForegroundColor Red
+        [System.Windows.Forms.MessageBox]::Show(
+            "$($file.Name) file is missing.`n`nPlease run ServiceManager-PSADMIN-setup.ps1 to reconfigure.",
+            "Configuration Missing",
+            "OK",
+            "Error"
+        )
+        exit 1
+    }
+    
+    try {
+        $null = Get-Content $file.Path -Raw | ConvertFrom-Json
+    } catch {
+        Write-Host "❌ Invalid $($file.Name) file" -ForegroundColor Red
+        [System.Windows.Forms.MessageBox]::Show(
+            "$($file.Name) file is corrupted.`n`nPlease run ServiceManager-PSADMIN-setup.ps1 to reconfigure.",
+            "Invalid Configuration",
+            "OK",
+            "Error"
+        )
+        exit 1
+    }
+}
+
+Write-Host "✅ User configuration verified" -ForegroundColor Green
 
 # Modern Color Palette
 $global:Theme = @{
@@ -22,9 +108,9 @@ $global:Theme = @{
     TextMuted = [System.Drawing.Color]::FromArgb(108, 117, 125)
 }
 
-# Global Configuration
-$global:ConfigFile = ".\scripts_storage.json"
-$global:SettingsFile = ".\app_settings.json"
+# Global Configuration - Now using user_config directory
+$global:ConfigFile = ".\user_config\scripts_storage.json"
+$global:SettingsFile = ".\user_config\app_settings.json"
 $global:LogEntries = [System.Collections.ArrayList]::new()
 $global:ActiveTabs = @{}
 
@@ -71,11 +157,12 @@ function Load-AppSettings {
 function Create-DefaultSettings {
     $defaultSettings = @{
         version = "2.0"
-        serviceManagerPath = ".\ServerManager-V2.ps1"
-        defaultScriptLocation = ".\scripts\"
+        serviceManagerPath = ".\ServiceManager.ps1"
+        defaultScriptLocation = ".\"
         autoOrganizeScripts = $true
         theme = "Modern"
         enableNotifications = $true
+        firstRun = $false
     }
     Save-AppSettings $defaultSettings
     return $defaultSettings
@@ -116,57 +203,8 @@ function Create-DefaultConfig {
     $defaultConfig = @{
         version = "2.0"
         lastModified = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
-        scripts = @(
-            @{
-                name = "[*] Start MCP Server"
-                fileName = "MCP-Startup"
-                extension = ".ps1"
-                type = "start"
-                mode = "Script"
-                color = "LightGreen"
-                directory = "C:\aiMain\Zoe\DockerMCP"
-                isBuiltIn = $true
-                icon = "🔵"
-                category = "AI Services"
-            },
-            @{
-                name = "[X] Stop MCP Server"
-                fileName = "MCP-Kill"
-                extension = ".ps1"
-                type = "stop"
-                mode = "Script"
-                color = "LightCoral"
-                directory = "C:\aiMain\Zoe\DockerMCP"
-                isBuiltIn = $true
-                icon = "🔴"
-                category = "AI Services"
-            },
-            @{
-                name = "[*] Start n8n"
-                fileName = "n8nStartup"
-                extension = ".ps1"
-                type = "start"
-                mode = "Script"
-                color = "LightBlue"
-                directory = "C:\aiMain\Zoe\Dockern8n"
-                isBuiltIn = $true
-                icon = "🌐"
-                category = "Automation"
-            },
-            @{
-                name = "[X] Stop n8n"
-                fileName = "n8nKill"
-                extension = ".ps1"
-                type = "stop"
-                mode = "Script"
-                color = "LightCoral"
-                directory = "C:\aiMain\Zoe\Dockern8n"
-                isBuiltIn = $true
-                icon = "🔴"
-                category = "Automation"
-            }
-        )
-        categories = @("AI Services", "Automation", "Development", "System", "Applications")
+        scripts = @()
+        categories = @("AI Services", "Automation", "Development", "System", "Applications", "Custom")
         statistics = @{
             totalExecutions = 0
             favoriteScripts = @()
@@ -349,11 +387,401 @@ function Test-ExecutableApp {
 # 🚀 ENHANCED ADD DIALOG
 # ═══════════════════════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🔄 UI REFRESH FUNCTIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+function Get-ServiceStatus {
+    param($service)
+    
+    $fullPath = Join-Path $service.directory "$($service.fileName)$($service.extension)"
+    
+    if (-not (Test-Path $fullPath)) {
+        return @{ Status = "Missing"; Color = "Red"; Icon = "🔴" }
+    }
+    
+    try {
+        if ($service.mode -eq "Application") {
+            $validation = Test-ExecutableApp $fullPath
+        } else {
+            $validation = Test-PowerShellScript $fullPath
+        }
+        
+        if ($validation.IsValid) {
+            return @{ Status = "Ready"; Color = "Green"; Icon = "🟢" }
+        } else {
+            return @{ Status = "Error"; Color = "Orange"; Icon = "🟠" }
+        }
+    } catch {
+        return @{ Status = "Error"; Color = "Red"; Icon = "🔴" }
+    }
+}
+
+function Get-ServiceRunningState {
+    param($service)
+    
+    try {
+        if ($service.mode -eq "Application") {
+            # Check if the application process is running
+            $processName = [System.IO.Path]::GetFileNameWithoutExtension($service.fileName)
+            $runningProcesses = Get-Process -Name $processName -ErrorAction SilentlyContinue
+            
+            if ($runningProcesses) {
+                return @{ IsRunning = $true; Icon = "⏹️"; Color = [System.Drawing.Color]::FromArgb(200, 220, 53, 69); Tooltip = "Stop $($service.name)" }
+            } else {
+                return @{ IsRunning = $false; Icon = "▶️"; Color = [System.Drawing.Color]::FromArgb(200, 40, 167, 69); Tooltip = "Start $($service.name)" }
+            }
+        } else {
+            # For scripts, check if there are PowerShell processes running this script
+            $scriptProcesses = Get-Process -Name "powershell" -ErrorAction SilentlyContinue | Where-Object {
+                $_.CommandLine -like "*$($service.fileName)*" -or $_.MainWindowTitle -like "*$($service.name)*"
+            }
+            
+            if ($scriptProcesses) {
+                return @{ IsRunning = $true; Icon = "⏹️"; Color = [System.Drawing.Color]::FromArgb(200, 220, 53, 69); Tooltip = "Stop $($service.name)" }
+            } else {
+                return @{ IsRunning = $false; Icon = "▶️"; Color = [System.Drawing.Color]::FromArgb(200, 40, 167, 69); Tooltip = "Start $($service.name)" }
+            }
+        }
+    } catch {
+        # Default to start state if we can't determine running state
+        return @{ IsRunning = $false; Icon = "▶️"; Color = [System.Drawing.Color]::FromArgb(200, 40, 167, 69); Tooltip = "Start $($service.name)" }
+    }
+}
+
+function Stop-SingleService {
+    param($service)
+    
+    try {
+        Add-LogEntry "Attempting to stop: $($service.name)" "Info"
+        
+        if ($service.mode -eq "Application") {
+            # Stop application process
+            $processName = [System.IO.Path]::GetFileNameWithoutExtension($service.fileName)
+            $runningProcesses = Get-Process -Name $processName -ErrorAction SilentlyContinue
+            
+            if ($runningProcesses) {
+                foreach ($proc in $runningProcesses) {
+                    $proc.CloseMainWindow()
+                    Start-Sleep -Milliseconds 500
+                    if (-not $proc.HasExited) {
+                        $proc.Kill()
+                    }
+                }
+                Add-LogEntry "Stopped application: $($service.name)" "Success"
+                [System.Windows.Forms.MessageBox]::Show("✅ $($service.name) stopped successfully", "Service Stopped", "OK", "Information")
+            } else {
+                Add-LogEntry "No running instances found for: $($service.name)" "Warning"
+            }
+        } else {
+            # Stop script processes
+            $scriptProcesses = Get-Process -Name "powershell" -ErrorAction SilentlyContinue | Where-Object {
+                $_.CommandLine -like "*$($service.fileName)*" -or $_.MainWindowTitle -like "*$($service.name)*"
+            }
+            
+            if ($scriptProcesses) {
+                foreach ($proc in $scriptProcesses) {
+                    $proc.CloseMainWindow()
+                    Start-Sleep -Milliseconds 500
+                    if (-not $proc.HasExited) {
+                        $proc.Kill()
+                    }
+                }
+                Add-LogEntry "Stopped script: $($service.name)" "Success"
+                [System.Windows.Forms.MessageBox]::Show("✅ $($service.name) stopped successfully", "Service Stopped", "OK", "Information")
+            } else {
+                Add-LogEntry "No running instances found for: $($service.name)" "Warning"
+            }
+        }
+    } catch {
+        $errorMsg = "Failed to stop $($service.name): $($_.Exception.Message)"
+        Add-LogEntry $errorMsg "Error"
+        [System.Windows.Forms.MessageBox]::Show($errorMsg, "Stop Error", "OK", "Error")
+    }
+}
+
+# Duplicate functions removed - kept the ones below
+
+function Remove-ServiceInstantly {
+    param($service, $config, $servicesPanel)
+    
+    # Check if service is protected (built-in)
+    if ($service.isBuiltIn -eq $true) {
+        Add-LogEntry "Cannot remove built-in service: $($service.name)" "Warning"
+        [System.Windows.Forms.MessageBox]::Show("Cannot remove built-in service: $($service.name)", "Protected Service", "OK", "Warning")
+        return $false
+    }
+    
+    # Remove from config
+    $config.scripts = $config.scripts | Where-Object { 
+        -not (($_.name -eq $service.name) -and ($_.directory -eq $service.directory))
+    }
+    
+    # Save config
+    if (Save-ScriptConfig $config) {
+        # Update global config reference
+        $script:config = $config
+        
+        # Refresh UI immediately
+        Refresh-ServiceInterface $servicesPanel $config
+        
+        Add-LogEntry "Removed: $($service.name)" "Success"
+        return $true
+    }
+    
+    return $false
+}
+
+function Refresh-ServiceInterface {
+    param($servicesPanel, $config)
+    
+    # Suspend layout for better performance
+    $servicesPanel.SuspendLayout()
+    
+    # Clear existing controls
+    $servicesPanel.Controls.Clear()
+    
+    # Check if there are any services to display
+    if ($config.scripts.Count -eq 0) {
+        # Show welcome message for new users
+        $welcomeLabel = New-Object System.Windows.Forms.Label
+        $welcomeLabel.Location = New-Object System.Drawing.Point(15, 50)
+        $welcomeLabel.Size = New-Object System.Drawing.Size(440, 100)
+        $welcomeLabel.Text = @"
+🎉 Welcome to ServiceManager!
+
+No services are currently configured.
+
+Click '➕ Add Script/App' above to add your first PowerShell script or application.
+
+You can manage both .ps1 scripts and .exe applications from this interface.
+"@
+        $welcomeLabel.Font = New-Object System.Drawing.Font("Segoe UI", 11)
+        $welcomeLabel.ForeColor = $global:Theme.TextMuted
+        $welcomeLabel.TextAlign = "MiddleCenter"
+        $servicesPanel.Controls.Add($welcomeLabel)
+    } else {
+        # Create service buttons with enhanced styling
+        $buttonY = 15
+        $buttonHeight = 35
+        $buttonSpacing = 5
+        $categorySpacing = 20
+        
+        # Group by category
+        $groupedServices = $config.scripts | Group-Object category
+        
+        foreach ($categoryGroup in $groupedServices) {
+            # Category header
+            $categoryLabel = New-Object System.Windows.Forms.Label
+            $categoryLabel.Location = New-Object System.Drawing.Point(15, $buttonY)
+            $categoryLabel.Size = New-Object System.Drawing.Size(440, 18)
+            $categoryLabel.Text = "📁 $($categoryGroup.Name)"
+            $categoryLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+            $categoryLabel.ForeColor = $global:Theme.Primary
+            $servicesPanel.Controls.Add($categoryLabel)
+            
+            $buttonY += $categorySpacing
+            
+            foreach ($service in $categoryGroup.Group) {
+                # Get service status
+                $status = Get-ServiceStatus $service
+                $runningState = Get-ServiceRunningState $service
+                
+                # Create service container panel
+                $servicePanel = New-Object System.Windows.Forms.Panel
+                $servicePanel.Location = New-Object System.Drawing.Point(15, $buttonY)
+                $servicePanel.Size = New-Object System.Drawing.Size(440, $buttonHeight)
+                $servicePanel.BackColor = [System.Drawing.Color]::$($service.color)
+                $servicePanel.BorderStyle = "None"
+                
+                # Start/Stop button (far left) - with smart state
+                $startStopButton = New-Object System.Windows.Forms.Button
+                $startStopButton.Location = New-Object System.Drawing.Point(2, 2)
+                $startStopButton.Size = New-Object System.Drawing.Size(28, ($buttonHeight - 4))
+                $startStopButton.Text = $runningState.Icon
+                $startStopButton.BackColor = $runningState.Color
+                $startStopButton.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+                $startStopButton.FlatStyle = "Flat"
+                $startStopButton.ForeColor = [System.Drawing.Color]::White
+                $startStopButton.Tag = @{ Service = $service; IsRunning = $runningState.IsRunning }
+                $startStopButton.Cursor = "Hand"
+                
+                # Add tooltip
+                $tooltip = New-Object System.Windows.Forms.ToolTip
+                $tooltip.SetToolTip($startStopButton, $runningState.Tooltip)
+                
+                # Start/Stop button hover effects
+                $startStopButton.Add_MouseEnter({
+                    $originalColor = $this.BackColor
+                    $this.BackColor = [System.Drawing.Color]::FromArgb(255, $originalColor.R, $originalColor.G, $originalColor.B)
+                })
+                $startStopButton.Add_MouseLeave({
+                    $tagData = $this.Tag
+                    if ($tagData.IsRunning) {
+                        $this.BackColor = [System.Drawing.Color]::FromArgb(200, 220, 53, 69)
+                    } else {
+                        $this.BackColor = [System.Drawing.Color]::FromArgb(200, 40, 167, 69)
+                    }
+                })
+                
+                # Start/Stop button click event
+                $startStopButton.Add_Click({
+                    $tagData = $this.Tag
+                    $svc = $tagData.Service
+                    
+                    if ($tagData.IsRunning) {
+                        # Service is running, try to stop it
+                        Stop-SingleService $svc
+                    } else {
+                        # Service is not running, start it
+                        Execute-EnhancedService $svc $true
+                    }
+                    
+                    # Refresh the interface to update button states
+                    Start-Sleep -Milliseconds 500  # Brief delay to let process start/stop
+                    Refresh-ServiceInterface $servicesPanel $script:config
+                })
+                
+                # Main service button (middle section)
+                $button = New-Object System.Windows.Forms.Button
+                $button.Location = New-Object System.Drawing.Point(35, 0)
+                $button.Size = New-Object System.Drawing.Size(340, $buttonHeight)
+                $button.Text = "$($status.Icon) $($service.icon) $($service.name) $(if ($service.mode -eq 'Application') { '⚙️' } else { '📜' })"
+                $button.BackColor = [System.Drawing.Color]::$($service.color)
+                $button.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
+                $button.FlatStyle = "Flat"
+                $button.ForeColor = [System.Drawing.Color]::White
+                $button.Tag = $service
+                $button.TextAlign = "MiddleLeft"
+                $button.Padding = New-Object System.Windows.Forms.Padding(15, 0, 0, 0)
+                
+                # Enhanced hover effects for main button
+                $button.Add_MouseEnter({
+                    $this.BackColor = [System.Drawing.Color]::FromArgb(220, $this.BackColor.R, $this.BackColor.G, $this.BackColor.B)
+                    $this.Parent.BackColor = $this.BackColor
+                })
+                $button.Add_MouseLeave({
+                    $this.BackColor = [System.Drawing.Color]::$($this.Tag.color)
+                    $this.Parent.BackColor = $this.BackColor
+                })
+                
+                # Click event for main button
+                $button.Add_Click({
+                    $svc = $this.Tag
+                    Execute-EnhancedService $svc $true
+                })
+                
+                # Add buttons to service panel
+                $servicePanel.Controls.Add($startStopButton)
+                $servicePanel.Controls.Add($button)
+                
+                # Only add trash button for non-built-in services
+                if ($service.isBuiltIn -ne $true) {
+                    # Trash button (far right, smaller)
+                    $trashButton = New-Object System.Windows.Forms.Button
+                    $trashButton.Location = New-Object System.Drawing.Point(410, 2)
+                    $trashButton.Size = New-Object System.Drawing.Size(26, ($buttonHeight - 4))
+                    $trashButton.Text = "🗑️"
+                    $trashButton.BackColor = [System.Drawing.Color]::FromArgb(200, 220, 53, 69)
+                    $trashButton.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+                    $trashButton.FlatStyle = "Flat"
+                    $trashButton.ForeColor = [System.Drawing.Color]::White
+                    $trashButton.Tag = $service
+                    $trashButton.Cursor = "Hand"
+                    
+                    # Trash button hover effects
+                    $trashButton.Add_MouseEnter({
+                        $this.BackColor = [System.Drawing.Color]::FromArgb(255, 220, 53, 69)
+                    })
+                    $trashButton.Add_MouseLeave({
+                        $this.BackColor = [System.Drawing.Color]::FromArgb(200, 220, 53, 69)
+                    })
+                    
+                    # Trash button click event
+                    $trashButton.Add_Click({
+                        $svc = $this.Tag
+                        if (Remove-ServiceInstantly $svc $script:config $servicesPanel) {
+                            # No additional action needed - UI already refreshed
+                        }
+                    })
+                    
+                    $servicePanel.Controls.Add($trashButton)
+                } else {
+                    # For built-in services, extend main button to cover the trash area
+                    $button.Size = New-Object System.Drawing.Size(405, $buttonHeight)
+                }
+                
+                # Add service panel to main panel
+                $servicesPanel.Controls.Add($servicePanel)
+                $buttonY += ($buttonHeight + $buttonSpacing)
+            }
+            
+            $buttonY += 10
+        }
+    }
+    
+    # Resume layout and refresh
+    $servicesPanel.ResumeLayout($true)
+    $servicesPanel.Refresh()
+}
+
+function Show-RestartDialog {
+    param($title, $message)
+    
+    $restartForm = New-Object System.Windows.Forms.Form
+    $restartForm.Text = $title
+    $restartForm.Size = New-Object System.Drawing.Size(400, 200)
+    $restartForm.StartPosition = "CenterParent"
+    $restartForm.FormBorderStyle = "FixedDialog"
+    $restartForm.MaximizeBox = $false
+    $restartForm.MinimizeBox = $false
+    $restartForm.BackColor = $global:Theme.Light
+    
+    $messageLabel = New-Object System.Windows.Forms.Label
+    $messageLabel.Location = New-Object System.Drawing.Point(20, 20)
+    $messageLabel.Size = New-Object System.Drawing.Size(340, 60)
+    $messageLabel.Text = $message
+    $messageLabel.Font = New-Object System.Drawing.Font("Segoe UI", 11)
+    $messageLabel.ForeColor = $global:Theme.Text
+    $messageLabel.TextAlign = "MiddleCenter"
+    $restartForm.Controls.Add($messageLabel)
+    
+    $restartNowButton = New-Object System.Windows.Forms.Button
+    $restartNowButton.Location = New-Object System.Drawing.Point(80, 100)
+    $restartNowButton.Size = New-Object System.Drawing.Size(100, 35)
+    $restartNowButton.Text = "🔄 Restart Now"
+    $restartNowButton.BackColor = $global:Theme.Primary
+    $restartNowButton.ForeColor = [System.Drawing.Color]::White
+    $restartNowButton.FlatStyle = "Flat"
+    $restartNowButton.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+    $restartNowButton.DialogResult = "Yes"
+    $restartForm.Controls.Add($restartNowButton)
+    
+    $restartLaterButton = New-Object System.Windows.Forms.Button
+    $restartLaterButton.Location = New-Object System.Drawing.Point(200, 100)
+    $restartLaterButton.Size = New-Object System.Drawing.Size(100, 35)
+    $restartLaterButton.Text = "⏰ Later"
+    $restartLaterButton.BackColor = $global:Theme.TextMuted
+    $restartLaterButton.ForeColor = [System.Drawing.Color]::White
+    $restartLaterButton.FlatStyle = "Flat"
+    $restartLaterButton.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
+    $restartLaterButton.DialogResult = "No"
+    $restartForm.Controls.Add($restartLaterButton)
+    
+    $result = $restartForm.ShowDialog()
+    $restartForm.Dispose()
+    
+    if ($result -eq "Yes") {
+        $form.Close()
+        Start-Process -FilePath "powershell" -ArgumentList "-ExecutionPolicy Bypass -File `"$($MyInvocation.MyCommand.Path)`""
+    }
+}
+
 function Show-EnhancedAddDialog {
-    param($config)
+    param($config, $servicesPanel)
     
     $addForm = New-Object System.Windows.Forms.Form
-    $addForm.Text = "Add New Item - ServerManager V2"
+    $addForm.Text = "Add New Item - ServiceManager"
     $addForm.Size = New-Object System.Drawing.Size(600, 550)
     $addForm.StartPosition = "CenterParent"
     $addForm.FormBorderStyle = "FixedDialog"
@@ -510,7 +938,7 @@ function Show-EnhancedAddDialog {
     $appNameTextBox = New-Object System.Windows.Forms.TextBox
     $appNameTextBox.Location = New-Object System.Drawing.Point(130, 28)
     $appNameTextBox.Size = New-Object System.Drawing.Size(280, 25)
-    $appNameTextBox.Text = "Syncthing"
+    $appNameTextBox.Text = "MyApplication"
     $appTab.Controls.Add($appNameTextBox)
     
     $appExtensionCombo = New-Object System.Windows.Forms.ComboBox
@@ -531,7 +959,6 @@ function Show-EnhancedAddDialog {
     $appDirTextBox = New-Object System.Windows.Forms.TextBox
     $appDirTextBox.Location = New-Object System.Drawing.Point(130, 68)
     $appDirTextBox.Size = New-Object System.Drawing.Size(300, 25)
-    $appDirTextBox.Text = "C:\Syncthing"
     $appTab.Controls.Add($appDirTextBox)
     
     $appBrowseButton = New-Object System.Windows.Forms.Button
@@ -647,8 +1074,14 @@ function Show-EnhancedAddDialog {
         
         if (Save-ScriptConfig $config) {
             Add-LogEntry "Successfully added: $($newItem.name)" "Success"
-            [System.Windows.Forms.MessageBox]::Show("✅ Item added successfully!`n`nRestart ServerManager to see the new button.", "Success", "OK", "Information")
             $addForm.Dispose()
+            
+            # Refresh the UI immediately instead of requiring restart
+            Refresh-ServiceInterface $servicesPanel $config
+            Add-LogEntry "Interface updated with new service" "Success"
+            
+            # Show simple success message - no restart needed
+            [System.Windows.Forms.MessageBox]::Show("✅ $($newItem.name) added successfully!", "Service Added", "OK", "Information")
             return $true
         }
     }
@@ -665,7 +1098,7 @@ function Show-SettingsDialog {
     param($settings)
     
     $settingsForm = New-Object System.Windows.Forms.Form
-    $settingsForm.Text = "⚙️ ServerManager V2 Settings"
+    $settingsForm.Text = "⚙️ ServiceManager Settings"
     $settingsForm.Size = New-Object System.Drawing.Size(500, 350)
     $settingsForm.StartPosition = "CenterParent"
     $settingsForm.FormBorderStyle = "FixedDialog"
@@ -724,9 +1157,33 @@ function Show-SettingsDialog {
     $autoOrganizeCheckBox.Checked = $settings.autoOrganizeScripts
     $settingsForm.Controls.Add($autoOrganizeCheckBox)
     
+    # Reset Configuration Button
+    $resetConfigButton = New-Object System.Windows.Forms.Button
+    $resetConfigButton.Location = New-Object System.Drawing.Point(30, 210)
+    $resetConfigButton.Size = New-Object System.Drawing.Size(150, 30)
+    $resetConfigButton.Text = "🔄 Reset Configuration"
+    $resetConfigButton.BackColor = $global:Theme.Danger
+    $resetConfigButton.ForeColor = [System.Drawing.Color]::White
+    $resetConfigButton.FlatStyle = "Flat"
+    $resetConfigButton.Add_Click({
+        $confirm = [System.Windows.Forms.MessageBox]::Show("This will delete all your configured services and reset to defaults.`n`nAre you sure?", "Reset Configuration", "YesNo", "Warning")
+        if ($confirm -eq "Yes") {
+            try {
+                Remove-Item ".\user_config" -Recurse -Force
+                [System.Windows.Forms.MessageBox]::Show("Configuration reset complete.`n`nServiceManager will restart with setup wizard.", "Reset Complete", "OK", "Information")
+                $settingsForm.Close()
+                $form.Close()
+                Start-Process -FilePath "powershell" -ArgumentList "-ExecutionPolicy Bypass -File `".\ServiceManager.ps1`""
+            } catch {
+                [System.Windows.Forms.MessageBox]::Show("Failed to reset configuration: $($_.Exception.Message)", "Reset Failed", "OK", "Error")
+            }
+        }
+    })
+    $settingsForm.Controls.Add($resetConfigButton)
+    
     # Buttons
     $saveButton = New-Object System.Windows.Forms.Button
-    $saveButton.Location = New-Object System.Drawing.Point(280, 250)
+    $saveButton.Location = New-Object System.Drawing.Point(280, 280)
     $saveButton.Size = New-Object System.Drawing.Size(75, 30)
     $saveButton.Text = "Save"
     $saveButton.BackColor = $global:Theme.Secondary
@@ -736,7 +1193,7 @@ function Show-SettingsDialog {
     $settingsForm.Controls.Add($saveButton)
     
     $cancelButton = New-Object System.Windows.Forms.Button
-    $cancelButton.Location = New-Object System.Drawing.Point(365, 250)
+    $cancelButton.Location = New-Object System.Drawing.Point(365, 280)
     $cancelButton.Size = New-Object System.Drawing.Size(75, 30)
     $cancelButton.Text = "Cancel"
     $cancelButton.BackColor = $global:Theme.TextMuted
@@ -766,7 +1223,7 @@ function Show-SettingsDialog {
 # ═══════════════════════════════════════════════════════════════════════════════
 
 function Show-RemoveDialog {
-    param($config)
+    param($config, $servicesPanel)
     
     $customServices = $config.scripts | Where-Object { -not $_.isBuiltIn }
     if ($customServices.Count -eq 0) {
@@ -846,8 +1303,13 @@ function Show-RemoveDialog {
             
             if (Save-ScriptConfig $config) {
                 Add-LogEntry "Removed: $($selectedService.name)" "Success"
-                [System.Windows.Forms.MessageBox]::Show("✅ Service removed successfully!`n`nRestart to update interface.", "Removed", "OK", "Information")
                 $removeForm.Dispose()
+                
+                # Refresh the UI immediately instead of requiring restart
+                Refresh-ServiceInterface $servicesPanel $config
+                Add-LogEntry "Interface updated after service removal" "Success"
+                
+                Show-RestartDialog "Service Removed" "✅ $($selectedService.name) removed successfully!`n`nThe interface has been updated. You can optionally restart for a complete refresh."
                 return $true
             }
         }
@@ -955,97 +1417,6 @@ function Stop-AllServices {
     Add-LogEntry "🛑 Stopping all services..." "Info"
     $results = @()
     
-    # Stop built-in services with enhanced detection
-    $builtInStops = $config.scripts | Where-Object { $_.isBuiltIn -and ($_.type -like "*stop*" -or $_.type -eq "mcp-stop" -or $_.type -eq "n8n-stop") }
-    foreach ($service in $builtInStops) {
-        $success = $false
-        $processCount = 0
-        
-        if ($service.type -eq "mcp-stop") {
-            # Enhanced MCP Server stopping
-            $portProcesses = netstat -ano 2>$null | findstr ":4000"
-            if ($portProcesses) {
-                $processIds = $portProcesses | ForEach-Object { ($_ -split '\s+')[-1] } | Select-Object -Unique | Where-Object { $_ -and $_ -ne "0" }
-                foreach ($processId in $processIds) {
-                    try {
-                        $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
-                        if ($process) {
-                            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
-                            Add-LogEntry "Killed MCP process: $($process.ProcessName) (PID: $processId)" "Success"
-                            $processCount++
-                            $success = $true
-                        }
-                    } catch {
-                        Add-LogEntry "Could not kill PID $processId" "Warning"
-                    }
-                }
-            }
-            
-            # Also check for processes by name
-            $mcpProcesses = Get-Process | Where-Object { $_.ProcessName -like "*mcp*" -or $_.MainWindowTitle -like "*mcp*" } -ErrorAction SilentlyContinue
-            foreach ($process in $mcpProcesses) {
-                try {
-                    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-                    Add-LogEntry "Killed MCP-related process: $($process.ProcessName)" "Success"
-                    $processCount++
-                    $success = $true
-                } catch { }
-            }
-            
-        } elseif ($service.type -eq "n8n-stop") {
-            # Enhanced n8n stopping
-            try {
-                # Stop Docker containers
-                $n8nDir = "C:\aiMain\Zoe\Dockern8n"
-                if (Test-Path $n8nDir) {
-                    Push-Location $n8nDir
-                    $dockerResult = docker-compose down 2>&1
-                    Pop-Location
-                    Add-LogEntry "Docker compose down completed" "Success"
-                    $processCount++
-                    $success = $true
-                }
-            } catch {
-                Add-LogEntry "Could not stop Docker containers" "Warning"
-            }
-            
-            # Stop processes on port 5678
-            $portProcesses = netstat -ano 2>$null | findstr ":5678"
-            if ($portProcesses) {
-                $processIds = $portProcesses | ForEach-Object { ($_ -split '\s+')[-1] } | Select-Object -Unique | Where-Object { $_ -and $_ -ne "0" }
-                foreach ($processId in $processIds) {
-                    try {
-                        $process = Get-Process -Id $processId -ErrorAction SilentlyContinue
-                        if ($process) {
-                            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
-                            Add-LogEntry "Killed n8n process: $($process.ProcessName) (PID: $processId)" "Success"
-                            $processCount++
-                            $success = $true
-                        }
-                    } catch { }
-                }
-            }
-            
-            # Stop ngrok processes
-            $ngrokProcesses = Get-Process -Name "ngrok" -ErrorAction SilentlyContinue
-            foreach ($process in $ngrokProcesses) {
-                try {
-                    Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-                    Add-LogEntry "Stopped ngrok process" "Success"
-                    $processCount++
-                    $success = $true
-                } catch { }
-            }
-        }
-        
-        if ($success) {
-            $results += "✅ $($service.name) ($processCount processes stopped)"
-        } else {
-            $results += "ℹ️ $($service.name) (no processes found)"
-        }
-        Start-Sleep 1
-    }
-    
     # Stop custom stop services by executing their scripts
     $customStops = $config.scripts | Where-Object { -not $_.isBuiltIn -and $_.type -like "*stop*" }
     foreach ($service in $customStops) {
@@ -1089,7 +1460,7 @@ function Stop-AllServices {
 # 🎮 MAIN APPLICATION INTERFACE
 # ═══════════════════════════════════════════════════════════════════════════════
 
-Write-Host "🚀 ServerManager V2 - Final Edition Starting..." -ForegroundColor Cyan
+Write-Host "🚀 ServiceManager Loading..." -ForegroundColor Cyan
 
 # Check Windows Terminal
 $global:HasWindowsTerminal = $false
@@ -1102,12 +1473,14 @@ try {
 }
 
 # Load configurations
-$config = Load-ScriptConfig
-$settings = Load-AppSettings
+$script:config = Load-ScriptConfig
+$script:settings = Load-AppSettings
+
+Write-Host "✅ Loaded $($script:config.scripts.Count) configured services" -ForegroundColor Green
 
 # Create Optimized Main Form
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "🚀 ServerManager V2 - Final Edition"
+$form.Text = "🚀 ServiceManager"
 $form.Size = New-Object System.Drawing.Size(1000, 650)
 $form.MinimumSize = New-Object System.Drawing.Size(900, 600)
 $form.StartPosition = "CenterScreen"
@@ -1124,7 +1497,7 @@ $form.Controls.Add($headerPanel)
 $titleLabel = New-Object System.Windows.Forms.Label
 $titleLabel.Location = New-Object System.Drawing.Point(30, 15)
 $titleLabel.Size = New-Object System.Drawing.Size(600, 30)
-$titleLabel.Text = "🚀 ServerManager V2 - Final Edition"
+$titleLabel.Text = "🚀 ServiceManager"
 $titleLabel.Font = New-Object System.Drawing.Font("Segoe UI", 16, [System.Drawing.FontStyle]::Bold)
 $titleLabel.ForeColor = [System.Drawing.Color]::White
 $headerPanel.Controls.Add($titleLabel)
@@ -1152,16 +1525,14 @@ $settingsMenuButton.Add_Click({
     
     $settingsItem = New-Object System.Windows.Forms.ToolStripMenuItem
     $settingsItem.Text = "⚙️  Settings"
-    $settingsItem.Add_Click({ Show-SettingsDialog $settings })
+    $settingsItem.Add_Click({ Show-SettingsDialog $script:settings })
     $menu.Items.Add($settingsItem)
     
     $restartItem = New-Object System.Windows.Forms.ToolStripMenuItem
     $restartItem.Text = "🔄 Restart Application"
     $restartItem.Add_Click({
-        if ([System.Windows.Forms.MessageBox]::Show("Restart ServerManager V2?", "Restart", "YesNo", "Question") -eq "Yes") {
-            $form.Close()
-            Start-Process -FilePath "powershell" -ArgumentList "-ExecutionPolicy Bypass -File `"$($MyInvocation.MyCommand.Path)`""
-        }
+        $form.Close()
+        Start-Process -FilePath "powershell" -ArgumentList "-ExecutionPolicy Bypass -File `"$($MyInvocation.MyCommand.Path)`""
     })
     $menu.Items.Add($restartItem)
     
@@ -1170,8 +1541,8 @@ $settingsMenuButton.Add_Click({
     $scriptsItem = New-Object System.Windows.Forms.ToolStripMenuItem
     $scriptsItem.Text = "📁 Open Script Folders"
     $scriptsItem.Add_Click({
-        if (Test-Path ".\scripts") {
-            Start-Process "explorer.exe" -ArgumentList ".\scripts"
+        if (Test-Path ".\start") {
+            Start-Process "explorer.exe" -ArgumentList ".\start"
         }
     })
     $menu.Items.Add($scriptsItem)
@@ -1181,7 +1552,7 @@ $settingsMenuButton.Add_Click({
     $exportItem.Add_Click({
         $saveDialog = New-Object System.Windows.Forms.SaveFileDialog
         $saveDialog.Filter = "JSON files (*.json)|*.json"
-        $saveDialog.FileName = "servermanager-config-$(Get-Date -Format 'yyyyMMdd').json"
+        $saveDialog.FileName = "servicemanager-config-$(Get-Date -Format 'yyyyMMdd').json"
         if ($saveDialog.ShowDialog() -eq "OK") {
             Copy-Item $global:ConfigFile $saveDialog.FileName
             [System.Windows.Forms.MessageBox]::Show("Configuration exported!", "Export", "OK", "Information")
@@ -1211,38 +1582,35 @@ $addButton.ForeColor = [System.Drawing.Color]::White
 $addButton.FlatStyle = "Flat"
 $addButton.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
 $addButton.Add_Click({
-    if (Show-EnhancedAddDialog $config) {
-        Add-LogEntry "Item added - restart to see changes" "Info"
-    }
+    Show-EnhancedAddDialog $script:config $servicesPanel
 })
 $managementPanel.Controls.Add($addButton)
 
-$removeButton = New-Object System.Windows.Forms.Button
-$removeButton.Location = New-Object System.Drawing.Point(145, 12)
-$removeButton.Size = New-Object System.Drawing.Size(100, 28)
-$removeButton.Text = "🗑️ Remove"
-$removeButton.BackColor = $global:Theme.Danger
-$removeButton.ForeColor = [System.Drawing.Color]::White
-$removeButton.FlatStyle = "Flat"
-$removeButton.Add_Click({
-    if (Show-RemoveDialog $config) {
-        Add-LogEntry "Service removed - restart to see changes" "Info"
-    }
-})
-$managementPanel.Controls.Add($removeButton)
+# Remove button removed - now using individual trash icons per service
 
 $refreshButton = New-Object System.Windows.Forms.Button
-$refreshButton.Location = New-Object System.Drawing.Point(255, 12)
+$refreshButton.Location = New-Object System.Drawing.Point(145, 12)
 $refreshButton.Size = New-Object System.Drawing.Size(100, 28)
 $refreshButton.Text = "🔄 Refresh"
 $refreshButton.BackColor = $global:Theme.Accent
 $refreshButton.ForeColor = [System.Drawing.Color]::White
 $refreshButton.FlatStyle = "Flat"
 $refreshButton.Add_Click({
-    $global:LogTextBox.Clear()
-    $global:LogEntries.Clear()
-    Add-LogEntry "Interface refreshed" "Success"
-    Add-LogEntry "Loaded $($config.scripts.Count) items" "Info"
+    try {
+        # Reload config from file
+        $script:config = Load-ScriptConfig
+        
+        # Refresh the services interface
+        Refresh-ServiceInterface $servicesPanel $script:config
+        
+        # Clear and refresh logs
+        $global:LogTextBox.Clear()
+        $global:LogEntries.Clear()
+        Add-LogEntry "Interface refreshed from config file" "Success"
+        Add-LogEntry "Loaded $($script:config.scripts.Count) services" "Info"
+    } catch {
+        Add-LogEntry "Error refreshing interface: $($_.Exception.Message)" "Error"
+    }
 })
 $managementPanel.Controls.Add($refreshButton)
 
@@ -1256,89 +1624,8 @@ $servicesPanel.AutoScroll = $true
 $servicesPanel.Anchor = "Top,Left,Bottom"
 $form.Controls.Add($servicesPanel)
 
-# Create service buttons with enhanced styling
-$buttonY = 15
-$buttonHeight = 35
-$buttonSpacing = 5
-$categorySpacing = 20
-
-# Group by category
-$groupedServices = $config.scripts | Group-Object category
-
-foreach ($categoryGroup in $groupedServices) {
-    # Category header
-    $categoryLabel = New-Object System.Windows.Forms.Label
-    $categoryLabel.Location = New-Object System.Drawing.Point(15, $buttonY)
-    $categoryLabel.Size = New-Object System.Drawing.Size(440, 18)
-    $categoryLabel.Text = "📁 $($categoryGroup.Name)"
-    $categoryLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-    $categoryLabel.ForeColor = $global:Theme.Primary
-    $servicesPanel.Controls.Add($categoryLabel)
-    
-    $buttonY += $categorySpacing
-    
-    foreach ($service in $categoryGroup.Group) {
-        $button = New-Object System.Windows.Forms.Button
-        $button.Location = New-Object System.Drawing.Point(15, $buttonY)
-        $button.Size = New-Object System.Drawing.Size(440, $buttonHeight)
-        $button.Text = "$($service.icon) $($service.name) $(if ($service.mode -eq 'Application') { '⚙️' } else { '📜' })"
-        $button.BackColor = [System.Drawing.Color]::$($service.color)
-        $button.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-        $button.FlatStyle = "Flat"
-        $button.Tag = $service
-        $button.TextAlign = "MiddleLeft"
-        $button.Padding = New-Object System.Windows.Forms.Padding(15, 0, 0, 0)
-        
-        # Enhanced hover effects
-        $button.Add_MouseEnter({
-            $this.BackColor = [System.Drawing.Color]::FromArgb(220, $this.BackColor.R, $this.BackColor.G, $this.BackColor.B)
-        })
-        $button.Add_MouseLeave({
-            $this.BackColor = [System.Drawing.Color]::$($this.Tag.color)
-        })
-        
-        # Click event
-        $button.Add_Click({
-            $svc = $this.Tag
-            
-            if ($svc.isBuiltIn -and $svc.type -eq "mcp-stop") {
-                # MCP stop logic
-                Add-LogEntry "Stopping MCP Server..." "Info"
-                $portProcesses = netstat -ano 2>$null | findstr ":4000"
-                if ($portProcesses) {
-                    $processIds = $portProcesses | ForEach-Object { ($_ -split '\s+')[-1] } | Select-Object -Unique
-                    foreach ($processId in $processIds) {
-                        if ($processId -and $processId -ne "0") {
-                            try {
-                                Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
-                                Add-LogEntry "Killed MCP process PID $processId" "Success"
-                            } catch { }
-                        }
-                    }
-                }
-            } elseif ($svc.isBuiltIn -and $svc.type -eq "n8n-stop") {
-                # n8n stop logic
-                Add-LogEntry "Stopping n8n..." "Info"
-                try {
-                    $n8nDir = "C:\aiMain\Zoe\Dockern8n"
-                    if (Test-Path $n8nDir) {
-                        Push-Location $n8nDir
-                        docker-compose down 2>&1
-                        Pop-Location
-                        Add-LogEntry "Docker compose down completed" "Success"
-                    }
-                } catch { }
-            } else {
-                Execute-EnhancedService $svc $true
-            }
-        })
-        
-        $servicesPanel.Controls.Add($button)
-        $buttonY += ($buttonHeight + $buttonSpacing)
-    }
-    
-    $buttonY += 10
-}
+# Initialize the services interface using the refresh function
+Refresh-ServiceInterface $servicesPanel $script:config
 
 # Control Panel (Below Services)
 $controlPanel = New-Object System.Windows.Forms.Panel
@@ -1359,7 +1646,7 @@ $startAllButton.FlatStyle = "Flat"
 $startAllButton.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
 $startAllButton.Add_Click({
     Add-LogEntry "🚀 Starting all services..." "Info"
-    $startServices = $config.scripts | Where-Object { $_.type -like "*start*" -or $_.mode -eq "Application" }
+    $startServices = $script:config.scripts | Where-Object { $_.type -like "*start*" -or $_.mode -eq "Application" }
     $results = @()
     
     foreach ($service in $startServices) {
@@ -1387,7 +1674,7 @@ $stopAllButton.ForeColor = [System.Drawing.Color]::White
 $stopAllButton.FlatStyle = "Flat"
 $stopAllButton.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
 $stopAllButton.Add_Click({
-    Stop-AllServices $config
+    Stop-AllServices $script:config
 })
 $controlPanel.Controls.Add($stopAllButton)
 
@@ -1403,7 +1690,7 @@ $testButton.Add_Click({
     Add-LogEntry "🔍 Validating all items..." "Info"
     $results = @()
     
-    foreach ($service in $config.scripts) {
+    foreach ($service in $script:config.scripts) {
         $fullPath = Join-Path $service.directory "$($service.fileName)$($service.extension)"
         
         if ($service.mode -eq "Application") {
@@ -1461,14 +1748,14 @@ $global:LogTextBox.Anchor = "Top,Bottom,Right"
 $form.Controls.Add($global:LogTextBox)
 
 # Initialize logs
-Add-LogEntry "🚀 ServerManager V2 Final Edition started" "Success"
-Add-LogEntry "Loaded $($config.scripts.Count) items from configuration" "Info"
+Add-LogEntry "🚀 ServiceManager started successfully" "Success"
+Add-LogEntry "Loaded $($config.scripts.Count) configured services" "Info"
 Add-LogEntry "Windows Terminal: $(if ($global:HasWindowsTerminal) { 'Available ✅' } else { 'Not found ⚠️' })" "Info"
 Add-LogEntry "Ready for action! 🎯" "Success"
 
-Write-Host "✅ Showing ServerManager V2 Final Edition..." -ForegroundColor Green
+Write-Host "✅ ServiceManager interface loaded successfully" -ForegroundColor Green
 
 # Show the form
 [System.Windows.Forms.Application]::Run($form)
 
-Write-Host "🎯 ServerManager V2 Final Edition closed" -ForegroundColor Cyan
+Write-Host "🎯 ServiceManager closed gracefully" -ForegroundColor Cyan

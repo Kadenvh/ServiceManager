@@ -1,0 +1,10 @@
+{
+  "version": "2.0",
+  "serviceManagerPath": ".\\ServiceManager.ps1",
+  "defaultScriptLocation": ".\\",
+  "autoOrganizeScripts": true,
+  "theme": "Modern",
+  "enableNotifications": true,
+  "firstRun": true,
+  "lastModified": "2024-01-01T00:00:00Z"
+}
